@@ -81,12 +81,32 @@ export class TypeScriptToTypeSpecConverter {
       return `${this.convertTypeToTypeSpecString(elementType)}[]`;
     }
     if (type.isObject()) {
+      const symbol = type.getSymbol();
+      
+      // Handle mapped types
+      if (type.isIndexType()) {
+        const indexType = type.getIndexType();
+        const constraintType = type.getConstraintType();
+        if (indexType && constraintType) {
+          return `Record<${this.convertTypeToTypeSpecString(constraintType)}, ${this.convertTypeToTypeSpecString(indexType)}>`;
+        }
+      }
+
       // Handle generic types
       if (type.getTypeArguments().length > 0) {
-        const baseType = type.getSymbol()?.getName() || '';
+        const baseType = symbol?.getName() || '';
         const typeArgs = type.getTypeArguments().map(t => 
           this.convertTypeToTypeSpecString(t)
         );
+        
+        // Special case for built-in generics
+        if (baseType === 'Array') {
+          return `${typeArgs[0]}[]`;
+        }
+        if (baseType === 'Record') {
+          return `Record<${typeArgs.join(", ")}>`;
+        }
+        
         return `${baseType}<${typeArgs.join(", ")}>`;
       }
 
