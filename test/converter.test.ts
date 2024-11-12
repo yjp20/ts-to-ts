@@ -1,8 +1,7 @@
 import { TypeScriptToTypeSpecConverter } from "../src/ts-to-typespec";
-import { createTypeSpecHost } from "./host";
 import * as fs from "fs";
 import * as path from "path";
-import { compile } from "@typespec/compiler";
+import { NodeHost, compile } from "@typespec/compiler";
 
 describe("TypeScriptToTypeSpecConverter", () => {
   let converter: TypeScriptToTypeSpecConverter;
@@ -45,13 +44,16 @@ describe("TypeScriptToTypeSpecConverter", () => {
       // Convert to TypeSpec
       const typespecCode = converter.convertTypeToTypeSpec(fileContent);
 
-      // Verify TypeSpec compilation
-      const tempFile = `main.tsp`;
-      const host = createTypeSpecHost({
-        [tempFile]: typespecCode,
-        "package.json": `{"main":${JSON.stringify(tempFile)}}`,
-      });
+      // Write TypeSpec code to temp directory
+      const tempFile = path.join(tempDir, "main.tsp");
+      fs.writeFileSync(tempFile, typespecCode);
+      fs.writeFileSync(
+        path.join(tempDir, "package.json"),
+        JSON.stringify({ name: "test", main: "main.tsp" })
+      );
 
+      // Verify TypeSpec compilation
+      const host = new NodeHost();
       expect(
         "\n<<<<<<<<<<< typescript <<<<<<<<<<<<\n" +
           fileContent.trim() +
