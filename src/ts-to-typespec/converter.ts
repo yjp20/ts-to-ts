@@ -1,4 +1,11 @@
-import { Project, Type, TypeFormatFlags, Node, TypeAliasDeclaration, InterfaceDeclaration } from "ts-morph";
+import {
+  Project,
+  Type,
+  TypeFormatFlags,
+  Node,
+  TypeAliasDeclaration,
+  InterfaceDeclaration,
+} from "ts-morph";
 
 export class TypeScriptToTypeSpecConverter {
   private project: Project;
@@ -19,7 +26,8 @@ export class TypeScriptToTypeSpecConverter {
 
     // Find the first type alias or interface declaration
     const typeNode = sourceFile.getFirstDescendant(
-      node => Node.isTypeAliasDeclaration(node) || Node.isInterfaceDeclaration(node)
+      (node) =>
+        Node.isTypeAliasDeclaration(node) || Node.isInterfaceDeclaration(node)
     );
 
     if (!typeNode) {
@@ -39,15 +47,17 @@ export class TypeScriptToTypeSpecConverter {
     const name = typeAlias.getName();
     const type = typeAlias.getType();
     const typeText = this.convertTypeToTypeSpecString(type);
-    
+
     return `model ${name} ${typeText};`;
   }
 
-  private convertInterfaceToTypeSpec(interfaceDecl: InterfaceDeclaration): string {
+  private convertInterfaceToTypeSpec(
+    interfaceDecl: InterfaceDeclaration
+  ): string {
     const name = interfaceDecl.getName();
     const type = interfaceDecl.getType();
     const typeText = this.convertTypeToTypeSpecString(type);
-    
+
     return `model ${name} ${typeText};`;
   }
 
@@ -67,16 +77,16 @@ export class TypeScriptToTypeSpecConverter {
     }
     if (type.isObject()) {
       const properties = type.getProperties();
-      const propertyStrings = properties.map(prop => {
+      const propertyStrings = properties.map((prop) => {
         const propType = prop.getTypeAtLocation(prop.getValueDeclaration()!);
         return `${prop.getName()}: ${this.convertTypeToTypeSpecString(propType)}`;
       });
-      
+
       return `{\n  ${propertyStrings.join(",\n  ")}\n}`;
     }
     if (type.isUnion()) {
       const types = type.getUnionTypes();
-      return types.map(t => this.convertTypeToTypeSpecString(t)).join(" | ");
+      return types.map((t) => this.convertTypeToTypeSpecString(t)).join(" | ");
     }
 
     // Default case - use the type's text representation
