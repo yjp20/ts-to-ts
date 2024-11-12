@@ -50,10 +50,10 @@ export class TypeScriptToTypeSpecConverter {
 
     // For simple types, use alias instead of model
     if (type.isString() || type.isNumber() || type.isBoolean()) {
-      return `model ${name} ${typeText};`;
+      return `alias ${name} = ${typeText};`;
     }
 
-    return `model ${name} is ${typeText};`;
+    return `model ${name} = ${typeText};`;
   }
 
   private convertInterfaceToTypeSpec(
@@ -84,14 +84,27 @@ export class TypeScriptToTypeSpecConverter {
       const properties = type.getProperties();
       const propertyStrings = properties.map((prop) => {
         const propType = prop.getTypeAtLocation(prop.getValueDeclaration()!);
-        return `${prop.getName()}: ${this.convertTypeToTypeSpecString(propType)}`;
+        const isOptional = prop.isOptional();
+        const propName = prop.getName();
+        const typeString = this.convertTypeToTypeSpecString(propType);
+        return `${propName}${isOptional ? '?' : ''}: ${typeString}`;
       });
 
       return `{\n  ${propertyStrings.join(",\n  ")}\n}`;
     }
     if (type.isUnion()) {
       const types = type.getUnionTypes();
-      return types.map((t) => this.convertTypeToTypeSpecString(t)).join(" | ");
+      const typeStrings = types.map(t => {
+        if (t.isLiteral()) {
+          const value = t.getLiteralValue();
+          return typeof value === 'string' ? `"${value}"` : `${value}`;
+        }
+        if (t.isNull()) {
+          return 'null';
+        }
+        return this.convertTypeToTypeSpecString(t);
+      });
+      return typeStrings.join(" | ");
     }
 
     // Default case - use the type's text representation
