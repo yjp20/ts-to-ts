@@ -140,6 +140,9 @@ export class TypeScriptToTypeSpecConverter {
         if (t.isNull()) {
           return 'null';
         }
+        if (t.isTemplateLiteral()) {
+          return `\`${t.getText()}\``;
+        }
         return this.convertTypeToTypeSpecString(t);
       });
       return typeStrings.join(" | ");
