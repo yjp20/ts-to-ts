@@ -50,10 +50,10 @@ export class TypeScriptToTypeSpecConverter {
 
     // For simple types, use alias instead of model
     if (type.isString() || type.isNumber() || type.isBoolean()) {
-      return `alias ${name} = ${typeText};`;
+      return `model ${name} ${typeText};`;
     }
 
-    return `model ${name} ${typeText};`;
+    return `model ${name} is ${typeText};`;
   }
 
   private convertInterfaceToTypeSpec(
@@ -63,7 +63,7 @@ export class TypeScriptToTypeSpecConverter {
     const type = interfaceDecl.getType();
     const typeText = this.convertTypeToTypeSpecString(type);
 
-    return `model ${name} ${typeText};`;
+    return `model ${name} = ${typeText};`;
   }
 
   private convertTypeToTypeSpecString(type: Type): string {
