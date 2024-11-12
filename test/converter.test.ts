@@ -53,7 +53,6 @@ describe("TypeScriptToTypeSpecConverter", () => {
       );
 
       // Verify TypeSpec compilation
-      const host = new NodeHost();
       expect(
         "\n<<<<<<<<<<< typescript <<<<<<<<<<<<\n" +
           fileContent.trim() +
@@ -62,7 +61,7 @@ describe("TypeScriptToTypeSpecConverter", () => {
           "\n>>>>>>>>>>> typespec >>>>>>>>>>>>>>"
       ).toMatchSnapshot(testName);
 
-      const program = await compile(host, ".");
+      const program = await compile(NodeHost, tempDir);
       const errors = program.diagnostics.filter((d) => d.severity === "error");
       expect(errors).toHaveLength(0);
     });
