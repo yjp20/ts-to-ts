@@ -59,7 +59,7 @@ export function createTypeSpecHost(
     readFile,
     writeFile,
     getExecutionRoot: () => process.cwd(),
-    getLibDirs: () => ["/"],
+    getLibDirs: () => [libPath],
     mkdirp: async (path: string) => path,
     realpath: async (path: string) => path,
     readUrl: () => {
