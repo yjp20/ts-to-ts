@@ -81,6 +81,15 @@ export class TypeScriptToTypeSpecConverter {
       return `${this.convertTypeToTypeSpecString(elementType)}[]`;
     }
     if (type.isObject()) {
+      // Handle generic types
+      if (type.getTypeArguments().length > 0) {
+        const baseType = type.getSymbol()?.getName() || '';
+        const typeArgs = type.getTypeArguments().map(t => 
+          this.convertTypeToTypeSpecString(t)
+        );
+        return `${baseType}<${typeArgs.join(", ")}>`;
+      }
+
       const properties = type.getProperties();
       const propertyStrings = properties.map((prop) => {
         const propType = prop.getTypeAtLocation(prop.getValueDeclaration()!);
@@ -89,6 +98,10 @@ export class TypeScriptToTypeSpecConverter {
         const typeString = this.convertTypeToTypeSpecString(propType);
         return `${propName}${isOptional ? '?' : ''}: ${typeString}`;
       });
+
+      if (properties.length === 0) {
+        return "Record<never, never>";
+      }
 
       return `{\n  ${propertyStrings.join(",\n  ")}\n}`;
     }
