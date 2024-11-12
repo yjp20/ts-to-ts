@@ -107,7 +107,16 @@ export class TypeScriptToTypeSpecConverter {
       return typeStrings.join(" | ");
     }
 
-    // Default case - use the type's text representation
-    return type.getText(undefined, TypeFormatFlags.None);
+    if (type.isIntersection()) {
+      const types = type.getIntersectionTypes();
+      return `{\n  ...${types.map(t => this.convertTypeToTypeSpecString(t)).join(",\n  ...")}\n}`;
+    }
+
+    // Default case - use the type's text representation with proper formatting
+    const typeText = type.getText(undefined, 
+      TypeFormatFlags.NoTruncation | 
+      TypeFormatFlags.WriteClassExpressionAsTypeLiteral
+    );
+    return typeText;
   }
 }
