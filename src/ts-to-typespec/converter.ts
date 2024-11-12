@@ -48,6 +48,11 @@ export class TypeScriptToTypeSpecConverter {
     const type = typeAlias.getType();
     const typeText = this.convertTypeToTypeSpecString(type);
 
+    // For simple types, use alias instead of model
+    if (type.isString() || type.isNumber() || type.isBoolean()) {
+      return `alias ${name} = ${typeText};`;
+    }
+
     return `model ${name} ${typeText};`;
   }
 
