@@ -77,6 +77,11 @@ export class TypeScriptToTypeSpecConverter {
       return "boolean";
     }
     if (type.isArray()) {
+      // Handle tuple types
+      if (type.isTuple()) {
+        const tupleTypes = type.getTupleElements();
+        return `[${tupleTypes.map(t => this.convertTypeToTypeSpecString(t)).join(", ")}]`;
+      }
       const elementType = type.getArrayElementType()!;
       return `${this.convertTypeToTypeSpecString(elementType)}[]`;
     }
