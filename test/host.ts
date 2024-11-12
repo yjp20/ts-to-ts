@@ -1,15 +1,28 @@
 import { CompilerHost, SourceFile, ProcessedLog } from "@typespec/compiler";
 import * as path from "path";
+import * as fs from "fs";
+import { fileURLToPath } from "url";
 
 export function createTypeSpecHost(
   files: Record<string, string>
 ): CompilerHost {
+  // Add standard library files to the files record
+  const compilerPath = path.dirname(fileURLToPath(import.meta.resolve("@typespec/compiler")));
+  const libPath = path.join(compilerPath, "lib");
+  const libFiles = fs.readdirSync(libPath);
+  
+  for (const file of libFiles) {
+    if (file.endsWith('.tsp')) {
+      const fullPath = path.join(libPath, file);
+      files[fullPath] = fs.readFileSync(fullPath, 'utf-8');
+    }
+  }
+
   async function readFile(filePath: string): Promise<SourceFile> {
     const normalizedPath = path.normalize(filePath);
     const content = files[normalizedPath];
-    console.log({ filePath, normalizedPath, content });
     if (!content) {
-      throw new Error(`File not found: ${path}`);
+      throw new Error(`File not found: ${filePath}`);
     }
     const lineStarts = [0];
     for (let i = 0; i < content.length; i++) {
