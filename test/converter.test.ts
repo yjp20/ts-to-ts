@@ -46,16 +46,13 @@ describe("TypeScriptToTypeSpecConverter", () => {
       const typespecCode = converter.convertTypeToTypeSpec(fileContent);
 
       // Verify TypeSpec compilation
-      const tempFile = path.join(tempDir, `${testName}.tsp`);
-      fs.writeFileSync(tempFile, typespecCode);
-
       const host = new TypeSpecHost();
+      const tempFile = `${testName}.tsp`;
       host.addFile(tempFile, typespecCode);
 
-      //       const program = await compile(host, tempFile);
-      //       const errors = program.diagnostics.filter((d) => d.severity === "error");
-
-      //       expect(errors).toHaveLength(0);
+      const program = await compile(host, tempFile);
+      const errors = program.diagnostics.filter((d) => d.severity === "error");
+      expect(errors).toHaveLength(0);
     });
   }
 });
