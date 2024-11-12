@@ -1,5 +1,5 @@
 import { TypeScriptToTypeSpecConverter } from "../src/ts-to-typespec";
-import { TypeSpecHost } from "./host";
+import { createTypeSpecHost } from "./host";
 import * as fs from "fs";
 import * as path from "path";
 import { compile } from "@typespec/compiler";
@@ -46,11 +46,21 @@ describe("TypeScriptToTypeSpecConverter", () => {
       const typespecCode = converter.convertTypeToTypeSpec(fileContent);
 
       // Verify TypeSpec compilation
-      const host = createTypeSpecHost();
-      const tempFile = `${testName}.tsp`;
-      host.addFile(tempFile, typespecCode);
+      const tempFile = `main.tsp`;
+      const host = createTypeSpecHost({
+        [tempFile]: typespecCode,
+        "package.json": `{"main":${JSON.stringify(tempFile)}}`,
+      });
 
-      const program = await compile(host, tempFile);
+      expect(
+        "\n<<<<<<<<<<< typescript <<<<<<<<<<<<\n" +
+          fileContent.trim() +
+          "\n===================================\n" +
+          typespecCode.trim() +
+          "\n>>>>>>>>>>> typespec >>>>>>>>>>>>>>"
+      ).toMatchSnapshot(testName);
+
+      const program = await compile(host, ".");
       const errors = program.diagnostics.filter((d) => d.severity === "error");
       expect(errors).toHaveLength(0);
     });
