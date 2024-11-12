@@ -44,8 +44,10 @@ export function createTypeSpecHost(
   return {
     readFile,
     writeFile,
-    getExecutionRoot: () => "/",
-    getLibDirs: () => [""],
+    getExecutionRoot: () => process.cwd(),
+    getLibDirs: () => [
+      path.dirname(require.resolve("@typespec/compiler/lib/lib.tsp")),
+    ],
     mkdirp: async (path: string) => path,
     realpath: async (path: string) => path,
     readUrl: () => {
