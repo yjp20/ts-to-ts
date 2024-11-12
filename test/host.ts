@@ -7,6 +7,7 @@ export function createTypeSpecHost(
   async function readFile(filePath: string): Promise<SourceFile> {
     const normalizedPath = path.normalize(filePath);
     const content = files[normalizedPath];
+    console.log({ filePath, normalizedPath, content });
     if (!content) {
       throw new Error(`File not found: ${path}`);
     }
@@ -45,9 +46,7 @@ export function createTypeSpecHost(
     readFile,
     writeFile,
     getExecutionRoot: () => process.cwd(),
-    getLibDirs: () => [
-      path.dirname(require.resolve("@typespec/compiler/lib/lib.tsp")),
-    ],
+    getLibDirs: () => ["/"],
     mkdirp: async (path: string) => path,
     realpath: async (path: string) => path,
     readUrl: () => {
