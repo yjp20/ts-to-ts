@@ -7,8 +7,7 @@ export function createTypeSpecHost(
   files: Record<string, string>
 ): CompilerHost {
   // Add standard library files to the files record
-  const compilerPath = path.dirname(fileURLToPath(import.meta.resolve("@typespec/compiler")));
-  const libPath = path.join(compilerPath, "lib");
+  const libPath = path.join(process.cwd(), "node_modules/@typespec/compiler/lib");
   const libFiles = fs.readdirSync(libPath);
   
   for (const file of libFiles) {
