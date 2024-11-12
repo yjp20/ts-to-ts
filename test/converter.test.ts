@@ -63,7 +63,15 @@ describe("TypeScriptToTypeSpecConverter", () => {
 
       const program = await compile(NodeHost, tempDir);
       const errors = program.diagnostics.filter((d) => d.severity === "error");
-      expect(errors).toHaveLength(0);
+      if (errors.length > 0) {
+        const formattedErrors = errors
+          .map((error) => {
+            const location = error.target ? `\n  at ${error.target.file?.path}:${error.target.line}:${error.target.column}` : '';
+            return `${error.message}${location}`;
+          })
+          .join('\n\n');
+        throw new Error(`TypeSpec compilation failed with errors:\n\n${formattedErrors}`);
+      }
     });
   }
 });
