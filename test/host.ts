@@ -1,14 +1,12 @@
 import { CompilerHost, SourceFile, ProcessedLog } from "@typespec/compiler";
 import * as path from "path";
 
-export class TypeSpecHost implements CompilerHost {
-  private files: Map<string, string> = new Map();
+export function createTypeSpecHost(): CompilerHost {
+  const files = new Map<string, string>();
 
-  constructor() {}
-
-  async readFile(filePath: string): Promise<SourceFile> {
+  async function readFile(filePath: string): Promise<SourceFile> {
     const normalizedPath = path.normalize(filePath);
-    const content = this.files.get(normalizedPath);
+    const content = files.get(normalizedPath);
     if (!content) {
       throw new Error(`File not found: ${path}`);
     }
@@ -37,105 +35,68 @@ export class TypeSpecHost implements CompilerHost {
     };
   }
 
-  writeFile(filePath: string, content: string): Promise<void> {
+  function writeFile(filePath: string, content: string): Promise<void> {
     const normalizedPath = path.normalize(filePath);
-    this.files.set(normalizedPath, content);
+    files.set(normalizedPath, content);
     return Promise.resolve();
   }
 
-  getExecutionRoot(): string {
-    return process.cwd();
-  }
-
-  getLibDirs(): string[] {
-    return ["node_modules/@typespec/compiler/lib"];
-  }
-
-  async mkdirp(path: string): Promise<string | undefined> {
-    return path;
-  }
-
-  async realpath(path: string): Promise<string> {
-    return path;
-  }
-
-  fileExists(filePath: string): boolean {
+  function fileExists(filePath: string): boolean {
     const normalizedPath = path.normalize(filePath);
-    return this.files.has(normalizedPath);
+    return files.has(normalizedPath);
   }
 
-  deleteFile(filePath: string): Promise<void> {
+  function deleteFile(filePath: string): Promise<void> {
     const normalizedPath = path.normalize(filePath);
-    this.files.delete(normalizedPath);
+    files.delete(normalizedPath);
     return Promise.resolve();
   }
 
-  listFiles(dir: string): string[] {
-    return Array.from(this.files.keys()).filter((file) => file.startsWith(dir));
+  function listFiles(dir: string): string[] {
+    return Array.from(files.keys()).filter((file) => file.startsWith(dir));
   }
 
-  readDirectory(dir: string): { files: string[]; directories: string[] } {
-    const entries = this.listFiles(dir);
-    return {
-      files: entries,
+  function addFile(filePath: string, content: string): void {
+    const normalizedPath = path.normalize(filePath);
+    files.set(normalizedPath, content);
+  }
+
+  return {
+    readFile,
+    writeFile,
+    getExecutionRoot: () => process.cwd(),
+    getLibDirs: () => ["node_modules/@typespec/compiler/lib"],
+    mkdirp: async (path: string) => path,
+    realpath: async (path: string) => path,
+    fileExists,
+    deleteFile,
+    listFiles,
+    readDirectory: (dir: string) => ({
+      files: listFiles(dir),
       directories: [],
-    };
-  }
-
-  getCurrentDirectory(): string {
-    return process.cwd();
-  }
-
-  readUrl(): Promise<SourceFile> {
-    throw new Error("Method not implemented.");
-  }
-
-  readDir(): Promise<string[]> {
-    return Promise.resolve([]);
-  }
-
-  rm(): Promise<void> {
-    return Promise.resolve();
-  }
-
-  getJsImport(): Promise<any> {
-    return Promise.resolve(null);
-  }
-
-  // Add a helper method to add files to the virtual filesystem
-  addFile(filePath: string, content: string): void {
-    const normalizedPath = path.normalize(filePath);
-    this.files.set(normalizedPath, content);
-  }
-
-  async stat(
-    path: string
-  ): Promise<{ isDirectory(): boolean; isFile(): boolean }> {
-    const isFile = this.files.has(path);
-    return {
-      isDirectory: () => !isFile,
-      isFile: () => isFile,
-    };
-  }
-
-  getSourceFileKind(path: string): "typespec" | "js" {
-    return path.endsWith(".tsp") ? "typespec" : "js";
-  }
-
-  fileURLToPath(url: string): string {
-    return url.replace("file://", "");
-  }
-
-  pathToFileURL(path: string): string {
-    return `file://${path}`;
-  }
-
-  logSink = {
-    log: (log: ProcessedLog) => console.log(log.message),
-    debug: (log: ProcessedLog) => console.debug(log.message),
-    trace: (log: ProcessedLog) => console.trace(log.message),
-    info: (log: ProcessedLog) => console.info(log.message),
-    warn: (log: ProcessedLog) => console.warn(log.message),
-    error: (log: ProcessedLog) => console.error(log.message),
+    }),
+    getCurrentDirectory: () => process.cwd(),
+    readUrl: () => {
+      throw new Error("Method not implemented.");
+    },
+    readDir: () => Promise.resolve([]),
+    rm: () => Promise.resolve(),
+    getJsImport: () => Promise.resolve(null),
+    addFile,
+    stat: async (path: string) => ({
+      isDirectory: () => !files.has(path),
+      isFile: () => files.has(path),
+    }),
+    getSourceFileKind: (path: string) => path.endsWith(".tsp") ? "typespec" : "js",
+    fileURLToPath: (url: string) => url.replace("file://", ""),
+    pathToFileURL: (path: string) => `file://${path}`,
+    logSink: {
+      log: (log: ProcessedLog) => console.log(log.message),
+      debug: (log: ProcessedLog) => console.debug(log.message),
+      trace: (log: ProcessedLog) => console.trace(log.message),
+      info: (log: ProcessedLog) => console.info(log.message),
+      warn: (log: ProcessedLog) => console.warn(log.message),
+      error: (log: ProcessedLog) => console.error(log.message),
+    },
   };
 }

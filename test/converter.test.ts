@@ -46,7 +46,7 @@ describe("TypeScriptToTypeSpecConverter", () => {
       const typespecCode = converter.convertTypeToTypeSpec(fileContent);
 
       // Verify TypeSpec compilation
-      const host = new TypeSpecHost();
+      const host = createTypeSpecHost();
       const tempFile = `${testName}.tsp`;
       host.addFile(tempFile, typespecCode);
 
