@@ -1,8 +1,6 @@
 import { parentPort, workerData } from "worker_threads";
 import { Project } from "ts-morph";
 import { convert } from "../src/ts-to-typespec/index.ts";
-import * as fs from "fs";
-import * as path from "path";
 import { createTestHost } from "@typespec/compiler/testing";
 
 interface WorkerData {
@@ -18,7 +16,7 @@ interface WorkerResult {
 
 async function runFixture(
   fixture: string,
-  content: string
+  fileContent: string
 ): Promise<WorkerResult> {
   // Create TypeScript project and convert to TypeSpec
   const project = new Project({ useInMemoryFileSystem: true });

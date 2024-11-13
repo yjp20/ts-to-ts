@@ -1,4 +1,4 @@
-import { expect, describe, it } from "vitest";
+import { expect, it } from "vitest";
 import * as fs from "fs";
 import * as path from "path";
 import { Worker } from "worker_threads";
@@ -7,15 +7,19 @@ const fixturesDir = path
   .join(path.dirname(import.meta.url), "../fixtures")
   .replace("file:", "");
 
-const fixtures = fs
+const tests = fs
   .readdirSync(fixturesDir)
   .filter((file) => file.endsWith(".ts"))
+  .map((file) => path.basename(file, ".ts"))
   .sort();
 
-function runWorker(fixture: string): Promise<any> {
+function runWorker(test: string): Promise<any> {
   return new Promise((resolve, reject) => {
+    const fixture = test + ".ts";
+    const content = fs.readFileSync(path.join(fixturesDir, fixture), "utf-8");
+
     const worker = new Worker("./test/worker.ts", {
-      workerData: { fixture, fixturesDir },
+      workerData: { fixture, content },
     });
 
     worker.on("message", resolve);
@@ -28,11 +32,10 @@ function runWorker(fixture: string): Promise<any> {
   });
 }
 
-it.concurrent.each(fixtures)("%s", async (fixture) => {
+it.concurrent.each(tests)("test %s", async (fixture) => {
   const result = await runWorker(fixture);
 
   if (result.error) {
-    console.log(result);
     throw new Error(result.error);
   }
 
@@ -43,6 +46,6 @@ it.concurrent.each(fixtures)("%s", async (fixture) => {
   }
 
   await expect(result.formatted).toMatchFileSnapshot(
-    path.join(fixturesDir, path.basename(fixture, ".ts") + ".snap")
+    path.join(fixturesDir, fixture + ".snap")
   );
 });

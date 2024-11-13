@@ -9,14 +9,38 @@ import {
   TypeChecker,
   JSDocableNode,
 } from "ts-morph";
+import {
+  Commas,
+  Indent,
+  lazy,
+  type LazyString,
+  Lines,
+  Stanzas,
+  Union,
+} from "./strings.ts";
 
-function indent(text: string, level = 1): string {
-  const spaces = "  ".repeat(level);
-  return text
-    .split("\n")
-    .map((line) => (line ? spaces + line : line))
-    .join("\n");
+const tsp = lazy<TypeSpecScope>;
+
+type TypeSpecScope = {
+  namespace?: TypeSpecScope;
+  using: string[];
+  typeSymbols: string[][];
+};
+type TypeSpecString = LazyString<TypeSpecScope>;
+
+function Builtin(s: string): LazyString<TypeSpecScope> {
+  return {
+    attach() {},
+    toString() {
+      return s;
+    },
+  };
 }
+
+Builtin.String = Builtin("string");
+Builtin.Boolean = Builtin("boolean");
+Builtin.Float64 = Builtin("float64");
+Builtin.Record = Builtin("Record");
 
 type ConversionResult =
   | {
@@ -27,7 +51,7 @@ type ConversionResult =
   | {
       kind: "success";
       file: string;
-      result: string;
+      result: TypeSpecString;
     };
 
 type ConversionContext = {
@@ -95,46 +119,51 @@ function getConvertibleNodes(sourceFile: SourceFile): Model[] {
 function convertSourceFile(
   ctx: ConversionContext,
   sourceFile: SourceFile
-): string {
+): TypeSpecString {
   const convertibleNodes = getConvertibleNodes(sourceFile);
 
-  return convertibleNodes
-    .map((model) => convertModel(ctx, model))
-    .filter((text) => text.length > 0)
-    .join("\n\n");
+  return Stanzas(...convertibleNodes.map((model) => convertModel(ctx, model)));
 }
 
-function convertModel(ctx: ConversionContext, model: Model): string {
+function convertModel(ctx: ConversionContext, model: Model): TypeSpecString {
   const typeText = convertType(ctx, model.type);
 
   const typeArgs = model.type
     .getTypeArguments()
     .map((_, index) => ["T"][index]);
 
+  const isObjectLike =
+    model.type.isObject() &&
+    !model.type.isArray() &&
+    !model.type.isTuple() &&
+    model.type.getSymbol()?.getName() !== "Array" &&
+    model.type.getSymbol()?.getName() !== "Record";
+
   const generics =
     // TODO: guh
-    model.type.isObject() && typeArgs.length ? `<${typeArgs.join(", ")}>` : "";
+    isObjectLike && typeArgs.length ? `<${typeArgs.join(", ")}>` : "";
 
   // Note: this is hacky do something better
-  if (typeText.startsWith("{")) {
-    return `model ${model.name}${generics} ${typeText};`;
+  if (isObjectLike) {
+    return tsp`model ${model.name}${generics} ${typeText};`;
   }
 
-  return `alias ${model.name}${generics} = ${typeText};`;
+  return tsp`alias ${model.name}${generics} = ${typeText};`;
 }
 
-function referenceType(ctx: ConversionContext, type: Type): string {
+function referenceType(ctx: ConversionContext, type: Type): TypeSpecString {
   const model = ctx.models.find((model) => model.type === type);
   if (model) {
-    return model.name;
+    // TODO
+    return tsp`${model.name}`;
   }
 
   return convertType(ctx, type);
 }
 
-function convertType(ctx: ConversionContext, type: Type): string {
+function convertType(ctx: ConversionContext, type: Type): TypeSpecString {
   if (type.isString()) {
-    return "string";
+    return Builtin.String;
   }
   if (type.isTemplateLiteral()) {
     // TODO: this should probably escape double quotes and investigate how escapes should work
@@ -153,20 +182,20 @@ function convertType(ctx: ConversionContext, type: Type): string {
         return [t, subType && `\${${subType}}`];
       })
       .join("");
-    return `"${string}"`;
+    return tsp`"${string}"`;
   }
   if (type.isNumber()) {
-    return "float64";
+    return Builtin.Float64;
   }
   if (type.isBoolean()) {
-    return "boolean";
+    return Builtin.Boolean;
   }
   if (type.isArray()) {
-    return `${referenceType(ctx, type.getArrayElementType()!)}[]`;
+    return tsp`${referenceType(ctx, type.getArrayElementType()!)}[]`;
   }
   if (type.isTuple()) {
     const tupleTypes = type.getTupleElements();
-    return `[${tupleTypes.map((t) => referenceType(ctx, t)).join(", ")}]`;
+    return tsp`[${Commas(...tupleTypes.map((t) => referenceType(ctx, t)))}]`;
   }
   if (type.isObject()) {
     const symbol = type.getSymbol();
@@ -180,34 +209,33 @@ function convertType(ctx: ConversionContext, type: Type): string {
 
       // Special case for built-in generics
       if (baseType === "Array") {
-        return `${typeArgs[0]}[]`;
+        return tsp`${typeArgs[0]}[]`;
       }
 
       if (baseType === "Record") {
-        return `Record<${typeArgs[1]}>`;
+        return tsp`${Builtin.Record}<${typeArgs[1]}>`;
       }
     }
 
     const properties = type.getProperties();
-    const propertyStrings = properties.map((prop) => {
-      const type = referenceType(
-        ctx,
-        prop.getTypeAtLocation(prop.getValueDeclaration()!)
-      );
-      return `${prop.getName()}${prop.isOptional() ? "?" : ""}: ${type}`;
-    });
+    const propertyStrings = properties.map(
+      (prop) =>
+        tsp`${prop.getName()}${prop.isOptional() ? "?" : ""}: ${referenceType(
+          ctx,
+          prop.getTypeAtLocation(prop.getValueDeclaration()!)
+        )}`
+    );
 
     if (properties.length === 0) {
-      return "Record<never, never>";
+      return tsp`${Builtin.Record}<never, never>`;
     }
 
-    return `{\n${indent(propertyStrings.join(",\n"))}\n}`;
+    return tsp`{\n${Indent(Lines(...propertyStrings))}\n}`;
   }
   if (type.isUnion()) {
-    return type
-      .getUnionTypes() //
-      .map((type) => referenceType(ctx, type))
-      .join(" | ");
+    return Union(
+      ...type.getUnionTypes().map((type) => referenceType(ctx, type))
+    );
   }
   if (type.isIntersection()) {
     const properties = type.getProperties();
@@ -218,7 +246,11 @@ function convertType(ctx: ConversionContext, type: Type): string {
       );
       return `${prop.getName()}${prop.isOptional() ? "?" : ""}: ${type}`;
     });
-    return `{\n${indent(propertyStrings.join(",\n"))}\n}`;
+    return tsp`
+      {
+        ${Indent(Lines(propertyStrings))}
+      }
+    `;
   }
 
   // Default case - use the type's text representation with proper formatting
@@ -228,5 +260,5 @@ function convertType(ctx: ConversionContext, type: Type): string {
       TypeFormatFlags.WriteClassExpressionAsTypeLiteral
   );
 
-  return typeText;
+  return tsp`${typeText}`;
 }
