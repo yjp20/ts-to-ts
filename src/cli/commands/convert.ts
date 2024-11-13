@@ -3,7 +3,7 @@ import * as path from "path";
 import { glob } from "glob";
 import { Project } from "ts-morph";
 import minimist from "minimist";
-import { convert } from "../../ts-to-typespec";
+import { convert } from "../../ts-to-typespec/index.js";
 
 export async function runConvert(args: string[]): Promise<void> {
   const argv = minimist(args, {
