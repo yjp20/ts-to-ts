@@ -89,9 +89,9 @@ export function convertType(type: Type): string {
     return "string";
   }
   if (type.isTemplateLiteral()) {
-    // Get the literal text representation and preserve it for TypeSpec
+    // Get the literal text representation and wrap it in double quotes for TypeSpec
     const typeText = type.getText(undefined, TypeFormatFlags.NoTruncation);
-    return typeText;
+    return `"${typeText}"`;
   }
   if (type.isNumber()) {
     return "float64";
