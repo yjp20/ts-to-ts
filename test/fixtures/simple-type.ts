@@ -1,1 +1,2 @@
+/** @model */
 type SimpleType = string;
