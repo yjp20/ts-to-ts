@@ -1,4 +1,11 @@
-import { Project, SourceFile, Type, TypeFormatFlags, Node } from "ts-morph";
+import {
+  Project,
+  SourceFile,
+  Type,
+  TypeFormatFlags,
+  Node,
+  SyntaxKind,
+} from "ts-morph";
 
 type ConversionResult =
   | {
@@ -37,20 +44,22 @@ export function convertProject(project: Project, files: string[]): string {
 }
 
 export function convertSourceFile(sourceFile: SourceFile): string {
-  const nodes = sourceFile.getChildrenOfKind(Node.SyntaxKind.TypeAliasDeclaration)
-    .concat(sourceFile.getChildrenOfKind(Node.SyntaxKind.InterfaceDeclaration));
+  const nodes = [
+    ...sourceFile.getChildrenOfKind(SyntaxKind.TypeAliasDeclaration),
+    ...sourceFile.getChildrenOfKind(SyntaxKind.InterfaceDeclaration),
+  ];
 
-  const convertibleNodes = nodes.filter(node => {
+  const convertibleNodes = nodes.filter((node) => {
     const leadingComments = node.getLeadingCommentRanges();
-    return leadingComments.some(comment => 
-      comment.getText().includes('@convert')
+    return leadingComments.some((comment) =>
+      comment.getText().includes("@model")
     );
   });
 
   return convertibleNodes
-    .map(node => convertTypeDefinition(node))
-    .filter(text => text.length > 0)
-    .join('\n\n');
+    .map((node) => convertTypeDefinition(node))
+    .filter((text) => text.length > 0)
+    .join("\n\n");
 }
 
 export function convertTypeDefinition(node: Node): string {
@@ -59,42 +68,46 @@ export function convertTypeDefinition(node: Node): string {
     const type = node.getType();
     const typeText = convertType(type);
 
-    // For simple types, use alias instead of model
-    if (type.isString() || type.isNumber() || type.isBoolean()) {
-      return `alias ${name} = ${typeText};`;
-    }
-
-    return `model ${name} = ${typeText};`;
+    return `alias ${name} = ${typeText};`;
   } else if (Node.isInterfaceDeclaration(node)) {
     const name = node.getName();
     const type = node.getType();
     const typeText = convertType(type);
 
-    return `model ${name} = ${typeText};`;
+    return `model ${name} ${typeText};`;
   }
 
   return ``;
+}
+
+function mustBeModel(type: Type): boolean {
+  return type.isObject();
 }
 
 export function convertType(type: Type): string {
   if (type.isString()) {
     return "string";
   }
+  if (type.isTemplateLiteral()) {
+
+  }
   if (type.isNumber()) {
-    return "number";
+    return "float64";
   }
   if (type.isBoolean()) {
     return "boolean";
   }
   if (type.isArray()) {
     // Handle tuple types
-    if (type.isTuple()) {
-      const tupleTypes = type.getTupleElements();
-      return `[${tupleTypes.map((t) => convertType(t)).join(", ")}]`;
-    }
     const elementType = type.getArrayElementType()!;
     return `${convertType(elementType)}[]`;
   }
+
+  if (type.isTuple()) {
+    const tupleTypes = type.getTupleElements();
+    return `[${tupleTypes.map((t) => convertType(t)).join(", ")}]`;
+  }
+
   if (type.isObject()) {
     const symbol = type.getSymbol();
 
@@ -107,6 +120,7 @@ export function convertType(type: Type): string {
       if (baseType === "Array") {
         return `${typeArgs[0]}[]`;
       }
+
       if (baseType === "Record") {
         return `Record<${typeArgs.join(", ")}>`;
       }
@@ -116,11 +130,10 @@ export function convertType(type: Type): string {
 
     const properties = type.getProperties();
     const propertyStrings = properties.map((prop) => {
-      const propType = prop.getTypeAtLocation(prop.getValueDeclaration()!);
-      const isOptional = prop.isOptional();
-      const propName = prop.getName();
-      const typeString = convertType(propType);
-      return `${propName}${isOptional ? "?" : ""}: ${typeString}`;
+      const type = convertType(
+        prop.getTypeAtLocation(prop.getValueDeclaration()!)
+      );
+      return `${prop.getName()}${prop.isOptional() ? "?" : ""}: ${type}`;
     });
 
     if (properties.length === 0) {
@@ -129,22 +142,12 @@ export function convertType(type: Type): string {
 
     return `{\n  ${propertyStrings.join(",\n  ")}\n}`;
   }
+
   if (type.isUnion()) {
-    const types = type.getUnionTypes();
-    const typeStrings = types.map((t) => {
-      if (t.isLiteral()) {
-        const value = t.getLiteralValue();
-        return typeof value === "string" ? `"${value}"` : `${value}`;
-      }
-      if (t.isNull()) {
-        return "null";
-      }
-      if (t.isTemplateLiteral()) {
-        return `\`${t.getText()}\``;
-      }
-      return convertType(t);
-    });
-    return typeStrings.join(" | ");
+    return type
+      .getUnionTypes() //
+      .map(convertType)
+      .join(" | ");
   }
 
   if (type.isIntersection()) {
@@ -158,5 +161,6 @@ export function convertType(type: Type): string {
     TypeFormatFlags.NoTruncation |
       TypeFormatFlags.WriteClassExpressionAsTypeLiteral
   );
+
   return typeText;
 }
