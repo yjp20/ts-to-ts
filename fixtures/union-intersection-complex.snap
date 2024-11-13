@@ -1,0 +1,47 @@
+<<<<<<<<<<< typescript <<<<<<<<<<<<
+/** @model */
+type StringOrNumberArray = string | number[];
+
+/** @model */
+interface A {
+  a: string;
+  shared: number;
+}
+
+/** @model */
+interface B {
+  b: boolean;
+  shared: number;
+}
+
+/** @model */
+type Complex = (A | B) & { id: string };
+
+/** @model */
+type MultiUnion = string | number | boolean | null | undefined;
+===================================
+// union-intersection-complex.ts
+alias StringOrNumberArray = string | float64[];
+
+model Complex {
+  a: string,
+  shared: float64,
+  id: string
+} | {
+  b: boolean,
+  shared: float64,
+  id: string
+};
+
+alias MultiUnion = string | float64 | false | true;
+
+model A {
+  a: string,
+  shared: float64
+};
+
+model B {
+  b: boolean,
+  shared: float64
+};
+>>>>>>>>>>> typespec >>>>>>>>>>>>>>

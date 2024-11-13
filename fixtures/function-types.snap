@@ -1,0 +1,32 @@
+<<<<<<<<<<< typescript <<<<<<<<<<<<
+/** @model */
+type Callback = (error: Error | null, result?: string) => void;
+
+/** @model */
+interface Handler {
+  handle: (event: string) => Promise<void>;
+}
+
+/** @model */
+type AsyncFunction = () => Promise<string>;
+
+/** @model */
+interface APIClient {
+  get: <T>(url: string) => Promise<T>;
+  post: <T>(url: string, data: unknown) => Promise<T>;
+}
+===================================
+// function-types.ts
+alias Callback = Record<never, never>;
+
+alias AsyncFunction = Record<never, never>;
+
+model Handler {
+  handle: Record<never, never>
+};
+
+model APIClient {
+  get: Record<never, never>,
+  post: Record<never, never>
+};
+>>>>>>>>>>> typespec >>>>>>>>>>>>>>

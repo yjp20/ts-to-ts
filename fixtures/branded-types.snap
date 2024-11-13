@@ -1,0 +1,69 @@
+<<<<<<<<<<< typescript <<<<<<<<<<<<
+/** @model */
+type EmailAddress = string & { __brand: "email" };
+
+/** @model */
+type UserId = number & { __brand: "userId" };
+
+/** @model */
+type PositiveNumber = number & { __brand: "positive" };
+
+/** @model */
+interface ValidatedUser {
+  email: EmailAddress;
+  id: UserId;
+  score: PositiveNumber;
+}
+===================================
+// branded-types.ts
+model EmailAddress {
+  toString: Record<never, never>,
+  charAt: Record<never, never>,
+  charCodeAt: Record<never, never>,
+  concat: Record<never, never>,
+  indexOf: Record<never, never>,
+  lastIndexOf: Record<never, never>,
+  localeCompare: Record<never, never>,
+  match: Record<never, never>,
+  replace: Record<never, never>,
+  search: Record<never, never>,
+  slice: Record<never, never>,
+  split: Record<never, never>,
+  substring: Record<never, never>,
+  toLowerCase: Record<never, never>,
+  toLocaleLowerCase: Record<never, never>,
+  toUpperCase: Record<never, never>,
+  toLocaleUpperCase: Record<never, never>,
+  trim: Record<never, never>,
+  length: float64,
+  substr: Record<never, never>,
+  valueOf: Record<never, never>,
+  __brand: "email"
+};
+
+model UserId {
+  toString: Record<never, never>,
+  toFixed: Record<never, never>,
+  toExponential: Record<never, never>,
+  toPrecision: Record<never, never>,
+  valueOf: Record<never, never>,
+  toLocaleString: Record<never, never>,
+  __brand: "userId"
+};
+
+model PositiveNumber {
+  toString: Record<never, never>,
+  toFixed: Record<never, never>,
+  toExponential: Record<never, never>,
+  toPrecision: Record<never, never>,
+  valueOf: Record<never, never>,
+  toLocaleString: Record<never, never>,
+  __brand: "positive"
+};
+
+model ValidatedUser {
+  email: EmailAddress,
+  id: UserId,
+  score: PositiveNumber
+};
+>>>>>>>>>>> typespec >>>>>>>>>>>>>>

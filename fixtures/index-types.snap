@@ -1,0 +1,28 @@
+<<<<<<<<<<< typescript <<<<<<<<<<<<
+/** @model */
+interface Person {
+  name: string;
+  age: number;
+}
+
+/** @model */
+type AgeType = Person["age"];
+
+/** @model */
+type Properties = keyof Person;
+
+/** @model */
+type NameOrAge = Person[keyof Person];
+===================================
+// index-types.ts
+alias AgeType = float64;
+
+alias Properties = "age" | "name";
+
+alias NameOrAge = string | AgeType;
+
+model Person {
+  name: string,
+  age: AgeType
+};
+>>>>>>>>>>> typespec >>>>>>>>>>>>>>
