@@ -1,13 +1,8 @@
 #!/usr/bin/env node
 
-import { Convert } from "./commands/convert";
-import { flush, handle } from "@oclif/core";
+import { runConvert } from "./commands/convert";
 
-Convert.run().then(
-  async () => {
-    await flush();
-  },
-  async (err) => {
-    await handle(err);
-  }
-);
+runConvert(process.argv.slice(2)).catch((error) => {
+  console.error(error);
+  process.exit(1);
+});

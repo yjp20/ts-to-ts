@@ -15,9 +15,8 @@
     "cli": "node ./dist/cli/index.js"
   },
   "dependencies": {
-    "@oclif/core": "^4.0.32",
-    "@oclif/plugin-help": "^6.2.16",
     "glob": "^11.0.0",
+    "minimist": "^1.2.8",
     "ts-morph": "^24.0.0"
   },
   "devDependencies": {

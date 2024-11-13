@@ -1,69 +1,56 @@
-import { Args, Command, Flags } from "@oclif/core";
 import * as fs from "fs";
 import * as path from "path";
 import { glob } from "glob";
 import { Project } from "ts-morph";
+import minimist from "minimist";
 import { convert } from "../../ts-to-typespec";
 
-export class Convert extends Command {
-  static description = "Convert TypeScript type definitions to TypeSpec";
+export async function runConvert(args: string[]): Promise<void> {
+  const argv = minimist(args, {
+    string: ["output"],
+    alias: { o: "output" },
+    default: { output: "typespec" },
+  });
 
-  static examples = [
-    "$ ts-to-typespec convert src/**/*.ts",
-    "$ ts-to-typespec convert types.ts -o typespec/",
-  ];
+  const filesPattern = argv._[0];
+  if (!filesPattern) {
+    console.error("Error: No input files specified");
+    console.error("Usage: ts-to-typespec <files> [-o output]");
+    console.error("Example: ts-to-typespec src/**/*.ts -o typespec/");
+    process.exit(1);
+  }
 
-  static flags = {
-    output: Flags.string({
-      char: "o",
-      description: "output directory for TypeSpec files",
-      default: "typespec",
-    }),
-  };
+  // Ensure output directory exists
+  if (!fs.existsSync(argv.output)) {
+    fs.mkdirSync(argv.output, { recursive: true });
+  }
 
-  static args = {
-    files: Args.file({
-      name: "files",
-      description: "TypeScript files to convert (glob pattern)",
-      required: true,
-    }),
-  };
+  // Find all matching files
+  const files = await glob(filesPattern);
 
-  async run(): Promise<void> {
-    const { args, flags } = await this.parse(Convert);
-    const filesPattern = args.files as string;
+  if (files.length === 0) {
+    console.warn("No matching files found");
+    return;
+  }
 
-    // Ensure output directory exists
-    if (!fs.existsSync(flags.output)) {
-      fs.mkdirSync(flags.output, { recursive: true });
-    }
+  try {
+    // Create TypeScript project and add all files
+    const project = new Project();
+    files.forEach(file => {
+      const content = fs.readFileSync(file, "utf-8");
+      project.createSourceFile(file, content);
+    });
 
-    // Find all matching files
-    const files = await glob(filesPattern);
+    // Convert to TypeSpec
+    const typespecCode = convert(project, files);
 
-    if (files.length === 0) {
-      this.warn("No matching files found");
-      return;
-    }
+    // Write output file
+    const outputPath = path.join(argv.output, "main.tsp");
+    fs.writeFileSync(outputPath, typespecCode);
 
-    try {
-      // Create TypeScript project and add all files
-      const project = new Project();
-      files.forEach(file => {
-        const content = fs.readFileSync(file, "utf-8");
-        project.createSourceFile(file, content);
-      });
-
-      // Convert to TypeSpec
-      const typespecCode = convert(project, files);
-
-      // Write output file
-      const outputPath = path.join(flags.output, "main.tsp");
-      fs.writeFileSync(outputPath, typespecCode);
-
-      this.log(`Converted ${files.length} files -> ${outputPath}`);
-    } catch (error) {
-      this.error(`Failed to convert: ${error instanceof Error ? error.message : String(error)}`);
-    }
+    console.log(`Converted ${files.length} files -> ${outputPath}`);
+  } catch (error) {
+    console.error(`Failed to convert: ${error instanceof Error ? error.message : String(error)}`);
+    process.exit(1);
   }
 }
