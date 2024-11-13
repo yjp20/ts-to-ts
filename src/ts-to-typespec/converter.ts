@@ -3,8 +3,10 @@ import {
   SourceFile,
   Type,
   TypeFormatFlags,
-  Node,
   SyntaxKind,
+  TypeAliasDeclaration,
+  InterfaceDeclaration,
+  TypeChecker,
 } from "ts-morph";
 
 type ConversionResult =
@@ -18,6 +20,11 @@ type ConversionResult =
       file: string;
       result: string;
     };
+
+type ConversionContext = {
+  project: Project;
+  typechecker: TypeChecker;
+};
 
 export function convertProject(project: Project, files: string[]): string {
   const conversions = files.map((file): ConversionResult => {
@@ -33,7 +40,10 @@ export function convertProject(project: Project, files: string[]): string {
     return {
       kind: "success",
       file,
-      result: convertSourceFile(sourceFile),
+      result: convertSourceFile(
+        { project, typechecker: project.getTypeChecker() },
+        sourceFile
+      ),
     };
   });
 
@@ -43,56 +53,65 @@ export function convertProject(project: Project, files: string[]): string {
     .join("\n\n");
 }
 
-export function convertSourceFile(sourceFile: SourceFile): string {
+function convertSourceFile(
+  ctx: ConversionContext,
+  sourceFile: SourceFile
+): string {
   const nodes = [
     ...sourceFile.getChildrenOfKind(SyntaxKind.TypeAliasDeclaration),
     ...sourceFile.getChildrenOfKind(SyntaxKind.InterfaceDeclaration),
   ];
 
   const convertibleNodes = nodes.filter((node) => {
-    const leadingComments = node.getLeadingCommentRanges();
-    return leadingComments.some((comment) =>
-      comment.getText().includes("@model")
-    );
+    return node
+      .getJsDocs()
+      .flatMap((doc) => doc.getTags())
+      .some((tag) => tag.getTagName() === "model");
   });
 
   return convertibleNodes
-    .map((node) => convertTypeDefinition(node))
+    .map((node) => convertTypeDefinition(ctx, node))
     .filter((text) => text.length > 0)
     .join("\n\n");
 }
 
-export function convertTypeDefinition(node: Node): string {
-  if (Node.isTypeAliasDeclaration(node)) {
-    const name = node.getName();
-    const type = node.getType();
-    const typeText = convertType(type);
+function convertTypeDefinition(
+  ctx: ConversionContext,
+  node: TypeAliasDeclaration | InterfaceDeclaration
+): string {
+  const name = node.getName();
+  const type = node.getType();
+  const typeText = convertType(ctx, type);
 
-    return `alias ${name} = ${typeText};`;
-  } else if (Node.isInterfaceDeclaration(node)) {
-    const name = node.getName();
-    const type = node.getType();
-    const typeText = convertType(type);
-
-    return `model ${name} ${typeText};`;
-  }
-
-  return ``;
+  return `alias ${name} = ${typeText};`;
 }
 
-function mustBeModel(type: Type): boolean {
-  return type.isObject();
+function referenceType(ctx: ConversionContext, type: Type): string {
+  return convertType(ctx, type);
 }
 
-export function convertType(type: Type): string {
+function convertType(ctx: ConversionContext, type: Type): string {
   if (type.isString()) {
     return "string";
   }
   if (type.isTemplateLiteral()) {
-    // Get the literal text representation, remove backticks and wrap in double quotes for TypeSpec
-    const typeText = type.getText(undefined, TypeFormatFlags.NoTruncation);
-    const cleanText = typeText.replace(/^`|`$/g, '');
-    return `"${cleanText}"`;
+    // TODO: this should probably escape double quotes and investigate how escapes should work
+    const string = type.compilerType.texts
+      .flatMap((t, index) => {
+        const subType =
+          type.compilerType.types[index] &&
+          convertType(
+            ctx,
+            // @ts-expect-error
+            ctx.project._context.compilerFactory.getType(
+              type.compilerType.types[index]
+            )
+          );
+
+        return [t, subType && `\${${subType}}`];
+      })
+      .join("");
+    return `"${string}"`;
   }
   if (type.isNumber()) {
     return "float64";
@@ -103,12 +122,12 @@ export function convertType(type: Type): string {
   if (type.isArray()) {
     // Handle tuple types
     const elementType = type.getArrayElementType()!;
-    return `${convertType(elementType)}[]`;
+    return `${convertType(ctx, elementType)}[]`;
   }
 
   if (type.isTuple()) {
     const tupleTypes = type.getTupleElements();
-    return `[${tupleTypes.map((t) => convertType(t)).join(", ")}]`;
+    return `[${tupleTypes.map((t) => convertType(ctx, t)).join(", ")}]`;
   }
 
   if (type.isObject()) {
@@ -117,7 +136,7 @@ export function convertType(type: Type): string {
     // Handle generic types
     if (type.getTypeArguments().length > 0) {
       const baseType = symbol?.getName() || "";
-      const typeArgs = type.getTypeArguments().map((t) => convertType(t));
+      const typeArgs = type.getTypeArguments().map((t) => convertType(ctx, t));
 
       // Special case for built-in generics
       if (baseType === "Array") {
@@ -134,6 +153,7 @@ export function convertType(type: Type): string {
     const properties = type.getProperties();
     const propertyStrings = properties.map((prop) => {
       const type = convertType(
+        ctx,
         prop.getTypeAtLocation(prop.getValueDeclaration()!)
       );
       return `${prop.getName()}${prop.isOptional() ? "?" : ""}: ${type}`;
@@ -149,13 +169,13 @@ export function convertType(type: Type): string {
   if (type.isUnion()) {
     return type
       .getUnionTypes() //
-      .map(convertType)
+      .map((type) => convertType(ctx, type))
       .join(" | ");
   }
 
   if (type.isIntersection()) {
     const types = type.getIntersectionTypes();
-    return `{\n  ...${types.map((t) => convertType(t)).join(",\n  ...")}\n}`;
+    return `{\n  ...${types.map((type) => convertType(ctx, type)).join(",\n  ...")}\n}`;
   }
 
   // Default case - use the type's text representation with proper formatting
