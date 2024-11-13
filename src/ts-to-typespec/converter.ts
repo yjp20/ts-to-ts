@@ -89,7 +89,9 @@ export function convertType(type: Type): string {
     return "string";
   }
   if (type.isTemplateLiteral()) {
-
+    // For template literals, we'll convert them to string type since TypeSpec 
+    // doesn't have direct template literal support
+    return "string";
   }
   if (type.isNumber()) {
     return "float64";
