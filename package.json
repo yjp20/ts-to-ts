@@ -14,7 +14,8 @@
     "commands": "./dist/cli/commands",
     "plugins": [
       "@oclif/plugin-help"
-    ]
+    ],
+    "topicSeparator": " "
   },
   "scripts": {
     "build": "tsc",

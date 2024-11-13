@@ -5,7 +5,7 @@ import { glob } from "glob";
 import { Project } from "ts-morph";
 import { convert } from "../../ts-to-typespec";
 
-export default class Convert extends Command {
+export class Convert extends Command {
   static description = "Convert TypeScript type definitions to TypeSpec";
 
   static examples = [
