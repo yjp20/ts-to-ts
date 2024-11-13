@@ -289,11 +289,11 @@ type NamedPoint = [string, number, number];
 type MixedTuple = [string, number, boolean?];
 ===================================
 // tuple-types.ts
-alias Point<T, > = [float64, float64];
+alias Point = [float64, float64];
 
-alias NamedPoint<T, , > = [string, float64, float64];
+alias NamedPoint = [string, float64, float64];
 
-alias MixedTuple<T, , > = [string, float64, boolean];
+alias MixedTuple = [string, float64, boolean?];
 >>>>>>>>>>> typespec >>>>>>>>>>>>>>"
 `;
 
