@@ -42,7 +42,7 @@ export function convertProject(project: Project, files: string[]): string {
     .getSourceFiles()
     .flatMap((sourceFile) => getConvertibleNodes(sourceFile))
     .map((node) => ({
-      name: getTag(node, "model")?.getCommentText()?.trim() || node.getName(),
+      name: getTag(node, "model")?.getCommentText()?.trim() || node.getName(), // Gets custom name or falls back to type name
       type: node.getType(),
     }));
 
