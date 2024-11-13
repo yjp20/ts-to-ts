@@ -59,7 +59,7 @@ describe("convert", () => {
       );
 
       const formatted =
-        "\n<<<<<<<<<<< typescript <<<<<<<<<<<<\n" +
+        "<<<<<<<<<<< typescript <<<<<<<<<<<<\n" +
         fileContent.trim() +
         "\n===================================\n" +
         typespecCode.trim() +
