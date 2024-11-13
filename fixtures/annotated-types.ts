@@ -1,9 +1,9 @@
-/** @convert */
+/** @model */
 type ConvertMe = string;
 
 type SkipMe = number;
 
-/** @convert */
+/** @model */
 interface UserInfo {
   name: string;
   age: number;

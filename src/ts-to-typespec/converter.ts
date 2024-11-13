@@ -7,7 +7,6 @@ import {
   TypeAliasDeclaration,
   InterfaceDeclaration,
   TypeChecker,
-  Node,
   JSDocableNode,
 } from "ts-morph";
 
@@ -37,14 +36,16 @@ type ConversionContext = {
   models: { name: string; type: Type }[];
 };
 
-export function convertProject(project: Project, files: string[]): string {
+type Model = {
+  node: TypeAliasDeclaration | InterfaceDeclaration;
+  name: string;
+  type: Type;
+};
+
+export function convert(project: Project, files: string[]): string {
   const models = project
     .getSourceFiles()
-    .flatMap((sourceFile) => getConvertibleNodes(sourceFile))
-    .map((node) => ({
-      name: getTag(node, "model")?.getCommentText()?.trim() || node.getName(), // Gets custom name or falls back to type name
-      type: node.getType(),
-    }));
+    .flatMap((sourceFile) => getConvertibleNodes(sourceFile));
 
   const ctx = { project, typechecker: project.getTypeChecker(), models };
 
@@ -78,11 +79,17 @@ function getTag(node: JSDocableNode, name: string) {
     .find((tag) => tag.getTagName() === name);
 }
 
-function getConvertibleNodes(sourceFile: SourceFile) {
+function getConvertibleNodes(sourceFile: SourceFile): Model[] {
   return [
     ...sourceFile.getChildrenOfKind(SyntaxKind.TypeAliasDeclaration),
     ...sourceFile.getChildrenOfKind(SyntaxKind.InterfaceDeclaration),
-  ].filter((node) => getTag(node, "model"));
+  ]
+    .filter((node) => getTag(node, "model"))
+    .map((node) => ({
+      name: getTag(node, "model")?.getCommentText()?.trim() || node.getName(),
+      type: node.getType(),
+      node,
+    }));
 }
 
 function convertSourceFile(
@@ -92,25 +99,28 @@ function convertSourceFile(
   const convertibleNodes = getConvertibleNodes(sourceFile);
 
   return convertibleNodes
-    .map((node) => convertTypeDefinition(ctx, node))
+    .map((model) => convertModel(ctx, model))
     .filter((text) => text.length > 0)
     .join("\n\n");
 }
 
-function convertTypeDefinition(
-  ctx: ConversionContext,
-  node: TypeAliasDeclaration | InterfaceDeclaration
-): string {
-  const name = node.getName();
-  const type = node.getType();
-  const typeText = convertType(ctx, type);
+function convertModel(ctx: ConversionContext, model: Model): string {
+  const typeText = convertType(ctx, model.type);
+
+  const typeArgs = model.type
+    .getTypeArguments()
+    .map((_, index) => ["T"][index]);
+
+  const generics =
+    // TODO: guh
+    model.type.isObject() && typeArgs.length ? `<${typeArgs.join(", ")}>` : "";
 
   // Note: this is hacky do something better
   if (typeText.startsWith("{")) {
-    return `model ${name} ${typeText};`;
+    return `model ${model.name}${generics} ${typeText};`;
   }
 
-  return `alias ${name} = ${typeText};`;
+  return `alias ${model.name}${generics} = ${typeText};`;
 }
 
 function referenceType(ctx: ConversionContext, type: Type): string {
@@ -152,16 +162,12 @@ function convertType(ctx: ConversionContext, type: Type): string {
     return "boolean";
   }
   if (type.isArray()) {
-    // Handle tuple types
-    const elementType = type.getArrayElementType()!;
-    return `${referenceType(ctx, elementType)}[]`;
+    return `${referenceType(ctx, type.getArrayElementType()!)}[]`;
   }
-
   if (type.isTuple()) {
     const tupleTypes = type.getTupleElements();
     return `[${tupleTypes.map((t) => referenceType(ctx, t)).join(", ")}]`;
   }
-
   if (type.isObject()) {
     const symbol = type.getSymbol();
 
@@ -178,10 +184,8 @@ function convertType(ctx: ConversionContext, type: Type): string {
       }
 
       if (baseType === "Record") {
-        return `Record<${typeArgs.join(", ")}>`;
+        return `Record<${typeArgs[1]}>`;
       }
-
-      return `${baseType}<${typeArgs.join(", ")}>`;
     }
 
     const properties = type.getProperties();
@@ -199,14 +203,12 @@ function convertType(ctx: ConversionContext, type: Type): string {
 
     return `{\n${indent(propertyStrings.join(",\n"))}\n}`;
   }
-
   if (type.isUnion()) {
     return type
       .getUnionTypes() //
       .map((type) => referenceType(ctx, type))
       .join(" | ");
   }
-
   if (type.isIntersection()) {
     const properties = type.getProperties();
     const propertyStrings = properties.map((prop) => {

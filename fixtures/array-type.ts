@@ -1,2 +1,2 @@
-/** @convert */
+/** @model */
 type StringArray = string[];

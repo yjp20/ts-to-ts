@@ -1,4 +1,4 @@
-/** @convert */
+/** @model */
 interface User {
   id: number;
   name: string;

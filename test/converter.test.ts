@@ -1,10 +1,10 @@
 import { Project } from "ts-morph";
-import { convertProject } from "../src/ts-to-typespec";
+import { convert } from "../src/ts-to-typespec";
 import * as fs from "fs";
 import * as path from "path";
 import { NodeHost, compile } from "@typespec/compiler";
 
-describe("TypeScriptToTypeSpecConverter", () => {
+describe("convert", () => {
   let tempDir: string;
 
   beforeEach(() => {
@@ -24,7 +24,7 @@ describe("TypeScriptToTypeSpecConverter", () => {
 
   // Dynamically load and run tests for all fixtures
   const fixturesDir = path
-    .join(path.dirname(import.meta.url), "fixtures")
+    .join(path.dirname(import.meta.url), "../fixtures")
     .replace("file:", "");
   const fixtures = fs
     .readdirSync(fixturesDir)
@@ -44,7 +44,7 @@ describe("TypeScriptToTypeSpecConverter", () => {
       // Create TypeScript project and convert to TypeSpec
       const project = new Project();
       project.createSourceFile(fixture, fileContent);
-      const typespecCode = convertProject(project, [fixture]);
+      const typespecCode = convert(project, [fixture]);
 
       // Write TypeSpec code to temp directory
       const tempFile = path.join(tempDir, "main.tsp");
@@ -54,14 +54,15 @@ describe("TypeScriptToTypeSpecConverter", () => {
         JSON.stringify({ name: "test", main: "main.tsp" })
       );
 
-      // Verify TypeSpec compilation
-      expect(
+      const formatted =
         "\n<<<<<<<<<<< typescript <<<<<<<<<<<<\n" +
-          fileContent.trim() +
-          "\n===================================\n" +
-          typespecCode.trim() +
-          "\n>>>>>>>>>>> typespec >>>>>>>>>>>>>>"
-      ).toMatchSnapshot(testName);
+        fileContent.trim() +
+        "\n===================================\n" +
+        typespecCode.trim() +
+        "\n>>>>>>>>>>> typespec >>>>>>>>>>>>>>";
+
+      // Verify TypeSpec compilation
+      expect(formatted).toMatchSnapshot(testName);
 
       const program = await compile(NodeHost, tempDir);
       const errors = program.diagnostics.filter((d) => d.severity === "error");
@@ -84,11 +85,11 @@ describe("TypeScriptToTypeSpecConverter", () => {
               const column = pos - lineStarts[line - 1] + 1;
 
               return `${error.message} @ ${file.path}:${line}:${column}`;
-            }
+            } else return error.message;
           })
           .join("\n");
         throw new Error(
-          `TypeSpec compilation failed with errors:\n${formattedErrors}`
+          `TypeSpec compilation failed with errors:\n\n${formatted}\n\n${formattedErrors}`
         );
       }
     });

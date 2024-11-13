@@ -35,11 +35,10 @@ export async function runConvert(args: string[]): Promise<void> {
 
   // Create TypeScript project
   const project = new Project();
-  
+
   // Add all files to the project
   for (const file of files) {
-    const content = fs.readFileSync(file, 'utf-8');
-    project.createSourceFile(file, content);
+    project.addSourceFileAtPath(file);
   }
 
   // Convert to TypeSpec
