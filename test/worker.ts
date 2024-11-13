@@ -7,7 +7,7 @@ import { createTestHost } from "@typespec/compiler/testing";
 
 interface WorkerData {
   fixture: string;
-  fixturesDir: string;
+  content: string;
 }
 
 interface WorkerResult {
@@ -18,11 +18,8 @@ interface WorkerResult {
 
 async function runFixture(
   fixture: string,
-  fixturesDir: string
+  content: string
 ): Promise<WorkerResult> {
-  // Read fixture file
-  const fileContent = fs.readFileSync(path.join(fixturesDir, fixture), "utf-8");
-
   // Create TypeScript project and convert to TypeSpec
   const project = new Project({ useInMemoryFileSystem: true });
   project.createSourceFile(fixture, fileContent);
@@ -70,7 +67,7 @@ async function runFixture(
 
 if (parentPort && workerData) {
   const data = workerData as WorkerData;
-  runFixture(data.fixture, data.fixturesDir)
+  runFixture(data.fixture, data.content)
     .then((result) => {
       parentPort!.postMessage(result);
     })
