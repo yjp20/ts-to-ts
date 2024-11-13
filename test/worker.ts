@@ -1,10 +1,9 @@
-import { parentPort, workerData, WorkerOptions } from "worker_threads";
+import { parentPort, workerData } from "worker_threads";
 import { Project } from "ts-morph";
-import { convert } from "../src/ts-to-typespec";
+import { convert } from "../src/ts-to-typespec/index.ts";
 import * as fs from "fs";
 import * as path from "path";
-import * as os from "os";
-import { NodeHost, compile, Program } from "@typespec/compiler";
+import { createTestHost } from "@typespec/compiler/testing";
 
 interface WorkerData {
   fixture: string;
@@ -17,28 +16,17 @@ interface WorkerResult {
   errors: string[];
 }
 
-async function runFixture(fixture: string, fixturesDir: string): Promise<WorkerResult> {
+async function runFixture(
+  fixture: string,
+  fixturesDir: string
+): Promise<WorkerResult> {
   // Read fixture file
-  const fileContent = fs.readFileSync(
-    path.join(fixturesDir, fixture),
-    "utf-8"
-  );
+  const fileContent = fs.readFileSync(path.join(fixturesDir, fixture), "utf-8");
 
   // Create TypeScript project and convert to TypeSpec
   const project = new Project({ useInMemoryFileSystem: true });
   project.createSourceFile(fixture, fileContent);
   const typespecCode = convert(project, [fixture]);
-
-  // Create unique temp directory for this test
-  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "ts-to-typespec-"));
-  const tempFile = path.join(tempDir, "main.tsp");
-
-  // Write files
-  fs.writeFileSync(tempFile, typespecCode);
-  fs.writeFileSync(
-    path.join(tempDir, "package.json"),
-    JSON.stringify({ name: "test", main: "main.tsp" })
-  );
 
   const formatted =
     "<<<<<<<<<<< typescript <<<<<<<<<<<<\n" +
@@ -48,9 +36,12 @@ async function runFixture(fixture: string, fixturesDir: string): Promise<WorkerR
     "\n>>>>>>>>>>> typespec >>>>>>>>>>>>>>";
 
   // Compile TypeSpec
-  const program = await compile(NodeHost, tempDir);
-  const errors = program.diagnostics.filter((d) => d.severity === "error");
-  
+  const testHost = await createTestHost();
+  testHost.addTypeSpecFile("main.tsp", typespecCode);
+  const diagnostics = await testHost.diagnose("main.tsp");
+
+  const errors = diagnostics.filter((d) => d.severity === "error");
+
   return {
     fixture,
     formatted,
@@ -73,7 +64,7 @@ async function runFixture(fixture: string, fixturesDir: string): Promise<WorkerR
         return `${error.message} @ ${file.path}:${line}:${column}`;
       }
       return error.message;
-    })
+    }),
   };
 }
 
