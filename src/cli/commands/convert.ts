@@ -33,24 +33,15 @@ export async function runConvert(args: string[]): Promise<void> {
     return;
   }
 
-  try {
-    // Create TypeScript project and add all files
-    const project = new Project();
-    files.forEach(file => {
-      const content = fs.readFileSync(file, "utf-8");
-      project.createSourceFile(file, content);
-    });
+  // Create TypeScript project and add all files
+  const project = new Project();
 
-    // Convert to TypeSpec
-    const typespecCode = convert(project, files);
+  // Convert to TypeSpec
+  const typespecCode = convert(project, files);
 
-    // Write output file
-    const outputPath = path.join(argv.output, "main.tsp");
-    fs.writeFileSync(outputPath, typespecCode);
+  // Write output file
+  const outputPath = path.join(argv.output, "main.tsp");
+  fs.writeFileSync(outputPath, typespecCode);
 
-    console.log(`Converted ${files.length} files -> ${outputPath}`);
-  } catch (error) {
-    console.error(`Failed to convert: ${error instanceof Error ? error.message : String(error)}`);
-    process.exit(1);
-  }
+  console.log(`Converted ${files.length} files -> ${outputPath}`);
 }
