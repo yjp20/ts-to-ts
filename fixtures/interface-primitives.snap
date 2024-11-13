@@ -1,0 +1,16 @@
+
+<<<<<<<<<<< typescript <<<<<<<<<<<<
+/** @model */
+interface User {
+  id: number;
+  name: string;
+  isActive: boolean;
+}
+===================================
+// interface-primitives.ts
+model User {
+  id: float64,
+  name: string,
+  isActive: boolean
+};
+>>>>>>>>>>> typespec >>>>>>>>>>>>>>

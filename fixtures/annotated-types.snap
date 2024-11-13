@@ -1,0 +1,25 @@
+
+<<<<<<<<<<< typescript <<<<<<<<<<<<
+/** @model */
+type ConvertMe = string;
+
+type SkipMe = number;
+
+/** @model */
+interface UserInfo {
+  name: string;
+  age: number;
+}
+
+interface IgnoreMe {
+  data: string;
+}
+===================================
+// annotated-types.ts
+alias ConvertMe = string;
+
+model UserInfo {
+  name: ConvertMe,
+  age: float64
+};
+>>>>>>>>>>> typespec >>>>>>>>>>>>>>

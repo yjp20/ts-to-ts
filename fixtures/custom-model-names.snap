@@ -1,0 +1,30 @@
+
+<<<<<<<<<<< typescript <<<<<<<<<<<<
+/** @model CustomGreeting */
+type Greeting = string;
+
+/** @model UserProfile */
+interface User {
+  name: string;
+  age: number;
+}
+
+/** @model AdminData */
+type Admin = User & {
+  permissions: string[];
+};
+===================================
+// custom-model-names.ts
+alias CustomGreeting = string;
+
+model AdminData {
+  name: CustomGreeting,
+  age: float64,
+  permissions: CustomGreeting[]
+};
+
+model UserProfile {
+  name: CustomGreeting,
+  age: float64
+};
+>>>>>>>>>>> typespec >>>>>>>>>>>>>>

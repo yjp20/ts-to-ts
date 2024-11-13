@@ -1,0 +1,8 @@
+
+<<<<<<<<<<< typescript <<<<<<<<<<<<
+/** @model */
+type SimpleType = string;
+===================================
+// simple-type.ts
+alias SimpleType = string;
+>>>>>>>>>>> typespec >>>>>>>>>>>>>>

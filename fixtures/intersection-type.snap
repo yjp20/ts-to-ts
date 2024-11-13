@@ -1,0 +1,32 @@
+
+<<<<<<<<<<< typescript <<<<<<<<<<<<
+/** @model */
+interface Name {
+  first: string;
+  last: string;
+}
+
+/** @model */
+interface Age {
+  age: number;
+}
+
+/** @model */
+type Person = Name & Age;
+===================================
+// intersection-type.ts
+model Person {
+  first: string,
+  last: string,
+  age: float64
+};
+
+model Name {
+  first: string,
+  last: string
+};
+
+model Age {
+  age: float64
+};
+>>>>>>>>>>> typespec >>>>>>>>>>>>>>

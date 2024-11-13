@@ -1,0 +1,16 @@
+
+<<<<<<<<<<< typescript <<<<<<<<<<<<
+/** @model */
+interface User {
+  id: number;
+  email?: string;
+  nickname?: string | null;
+}
+===================================
+// optional-properties.ts
+model User {
+  id: float64,
+  email?: string,
+  nickname?: string
+};
+>>>>>>>>>>> typespec >>>>>>>>>>>>>>

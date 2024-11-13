@@ -1,0 +1,51 @@
+
+<<<<<<<<<<< typescript <<<<<<<<<<<<
+/** @model */
+interface Address {
+  street: string;
+  city: string;
+  country?: string;
+}
+
+/** @model */
+interface Contact {
+  email: string;
+  phone?: string;
+}
+
+/** @model */
+interface PersonDetails {
+  name: string;
+  age: number;
+}
+
+/** @model */
+type CompleteProfile = PersonDetails & Contact & Address;
+===================================
+// nested-intersection.ts
+model CompleteProfile {
+  name: string,
+  age: float64,
+  email: string,
+  phone?: string,
+  street: string,
+  city: string,
+  country?: string
+};
+
+model Address {
+  street: string,
+  city: string,
+  country?: string
+};
+
+model Contact {
+  email: string,
+  phone?: string
+};
+
+model PersonDetails {
+  name: string,
+  age: float64
+};
+>>>>>>>>>>> typespec >>>>>>>>>>>>>>

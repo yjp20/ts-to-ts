@@ -1,16 +1,20 @@
+import { describe, test, expect, beforeEach, afterEach } from "vitest";
 import { Project } from "ts-morph";
 import { convert } from "../src/ts-to-typespec";
 import * as fs from "fs";
 import * as path from "path";
 import { NodeHost, compile } from "@typespec/compiler";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 describe("convert", () => {
   let tempDir: string;
 
   beforeEach(() => {
-    tempDir = path
-      .join(path.dirname(import.meta.url), "../temp")
-      .replace("file:", "");
+    tempDir = path.join(__dirname, "../temp");
     if (!fs.existsSync(tempDir)) {
       fs.mkdirSync(tempDir);
     }
@@ -61,8 +65,9 @@ describe("convert", () => {
         typespecCode.trim() +
         "\n>>>>>>>>>>> typespec >>>>>>>>>>>>>>";
 
-      // Verify TypeSpec compilation
-      expect(formatted).toMatchSnapshot(testName);
+      expect(formatted).toMatchFileSnapshot(
+        path.join(fixturesDir, testName + ".snap")
+      );
 
       const program = await compile(NodeHost, tempDir);
       const errors = program.diagnostics.filter((d) => d.severity === "error");

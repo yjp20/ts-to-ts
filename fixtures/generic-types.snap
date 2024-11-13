@@ -1,0 +1,30 @@
+
+<<<<<<<<<<< typescript <<<<<<<<<<<<
+/** @model */
+interface Container<T> {
+  value: T;
+  metadata?: Record<string, unknown>;
+}
+
+/** @model */
+type StringContainer = Container<string>;
+/** @model */
+type NumberList = Array<number>;
+/** @model */
+type Dictionary = Record<string, any>;
+===================================
+// generic-types.ts
+model StringContainer<T> {
+  value: string,
+  metadata?: Record<never, never>
+};
+
+alias NumberList<T> = float64[];
+
+alias Dictionary = Record<never, never>;
+
+model Container<T> {
+  value: T,
+  metadata?: Record<never, never>
+};
+>>>>>>>>>>> typespec >>>>>>>>>>>>>>

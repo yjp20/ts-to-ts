@@ -1,0 +1,16 @@
+
+<<<<<<<<<<< typescript <<<<<<<<<<<<
+/** @model */
+type Greeting = `hello ${string}`;
+/** @model */
+type EventName = `${string}:click` | `${string}:hover`;
+/** @model */
+type Color = `#${string}`;
+===================================
+// template-literal-types.ts
+alias Greeting = "hello ${string}";
+
+alias EventName = "${string}:click" | "${string}:hover";
+
+alias Color = "#${string}";
+>>>>>>>>>>> typespec >>>>>>>>>>>>>>

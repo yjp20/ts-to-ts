@@ -1,0 +1,16 @@
+
+<<<<<<<<<<< typescript <<<<<<<<<<<<
+/** @model */
+type Point = [number, number];
+/** @model */
+type NamedPoint = [string, number, number];
+/** @model */
+type MixedTuple = [string, number, boolean?];
+===================================
+// tuple-types.ts
+alias Point<T, > = [float64, float64];
+
+alias NamedPoint<T, , > = [string, float64, float64];
+
+alias MixedTuple<T, , > = [string, float64, boolean];
+>>>>>>>>>>> typespec >>>>>>>>>>>>>>

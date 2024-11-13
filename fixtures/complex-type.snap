@@ -1,0 +1,26 @@
+
+<<<<<<<<<<< typescript <<<<<<<<<<<<
+/** @model */
+interface User {
+  id: number;
+  name: string;
+  roles: string[];
+  status: "active" | "inactive";
+  profile: {
+    email: string;
+    age?: number;
+  };
+}
+===================================
+// complex-type.ts
+model User {
+  id: float64,
+  name: string,
+  roles: string[],
+  status: "active" | "inactive",
+  profile: {
+    email: string,
+    age?: float64
+  }
+};
+>>>>>>>>>>> typespec >>>>>>>>>>>>>>

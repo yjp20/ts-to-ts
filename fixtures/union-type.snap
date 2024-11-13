@@ -1,0 +1,8 @@
+
+<<<<<<<<<<< typescript <<<<<<<<<<<<
+/** @model */
+type Status = "active" | "inactive";
+===================================
+// union-type.ts
+alias Status = "active" | "inactive";
+>>>>>>>>>>> typespec >>>>>>>>>>>>>>
