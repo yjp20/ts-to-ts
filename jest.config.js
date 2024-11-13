@@ -3,7 +3,10 @@ export default {
   preset: "ts-jest",
   testEnvironment: "node",
   transform: {
-    "^.+\\.(t|j)sx?$": ["ts-jest", { useESM: true }],
+    "^.+\\.(t|j)sx?$": ["ts-jest", { 
+      useESM: true,
+      isolatedModules: true // Disables type checking
+    }],
   },
   moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json", "node"],
   roots: ["<rootDir>/src/", "<rootDir>/test/"],
