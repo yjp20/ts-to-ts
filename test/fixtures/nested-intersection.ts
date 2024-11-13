@@ -1,3 +1,4 @@
+/** @convert */
 interface Address {
   street: string;
   city: string;
