@@ -1,9 +1,7 @@
 #!/usr/bin/env node
 
-import { run } from '@oclif/core';
-import { flush } from '@oclif/core/flush';
-import { handle } from '@oclif/core/handle';
+import { run, flush, handle } from "@oclif/core";
 
 run()
-  .then(flush)
+  .then(() => flush)
   .catch(handle);
