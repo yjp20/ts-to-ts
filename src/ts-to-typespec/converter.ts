@@ -36,7 +36,22 @@ export function convertProject(project: Project, files: string[]): string {
     .join("\n\n");
 }
 
-export function convertSourceFile(sourceFile: SourceFile): string {}
+export function convertSourceFile(sourceFile: SourceFile): string {
+  const nodes = sourceFile.getChildrenOfKind(Node.SyntaxKind.TypeAliasDeclaration)
+    .concat(sourceFile.getChildrenOfKind(Node.SyntaxKind.InterfaceDeclaration));
+
+  const convertibleNodes = nodes.filter(node => {
+    const leadingComments = node.getLeadingCommentRanges();
+    return leadingComments.some(comment => 
+      comment.getText().includes('@convert')
+    );
+  });
+
+  return convertibleNodes
+    .map(node => convertTypeDefinition(node))
+    .filter(text => text.length > 0)
+    .join('\n\n');
+}
 
 export function convertTypeDefinition(node: Node): string {
   if (Node.isTypeAliasDeclaration(node)) {

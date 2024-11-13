@@ -29,7 +29,8 @@ describe("TypeScriptToTypeSpecConverter", () => {
     .replace("file:", "");
   const fixtures = fs
     .readdirSync(fixturesDir)
-    .filter((file) => file.endsWith(".ts"));
+    .filter((file) => file.endsWith(".ts"))
+    .sort();  // Ensure consistent test order
 
   for (const fixture of fixtures) {
     const testName = path.basename(fixture, ".ts");
