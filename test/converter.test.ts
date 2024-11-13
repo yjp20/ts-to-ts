@@ -1,14 +1,12 @@
-import { TypeScriptToTypeSpecConverter } from "../src/ts-to-typespec";
+import { convertProject } from "../src/ts-to-typespec";
 import * as fs from "fs";
 import * as path from "path";
 import { NodeHost, compile } from "@typespec/compiler";
 
 describe("TypeScriptToTypeSpecConverter", () => {
-  let converter: TypeScriptToTypeSpecConverter;
   let tempDir: string;
 
   beforeEach(() => {
-    converter = new TypeScriptToTypeSpecConverter();
     tempDir = path
       .join(path.dirname(import.meta.url), "../temp")
       .replace("file:", "");
@@ -30,7 +28,7 @@ describe("TypeScriptToTypeSpecConverter", () => {
   const fixtures = fs
     .readdirSync(fixturesDir)
     .filter((file) => file.endsWith(".ts"))
-    .sort();  // Ensure consistent test order
+    .sort(); // Ensure consistent test order
 
   for (const fixture of fixtures) {
     const testName = path.basename(fixture, ".ts");
@@ -43,7 +41,7 @@ describe("TypeScriptToTypeSpecConverter", () => {
       );
 
       // Convert to TypeSpec
-      const typespecCode = converter.convertTypeToTypeSpec(fileContent);
+      const typespecCode = convertProject();
 
       // Write TypeSpec code to temp directory
       const tempFile = path.join(tempDir, "main.tsp");
