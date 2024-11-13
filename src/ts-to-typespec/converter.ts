@@ -9,6 +9,11 @@ import {
   TypeChecker,
 } from "ts-morph";
 
+function indent(text: string, level = 1): string {
+  const spaces = "  ".repeat(level);
+  return text.split("\n").map(line => line ? spaces + line : line).join("\n");
+}
+
 type ConversionResult =
   | {
       kind: "error";
@@ -163,7 +168,7 @@ function convertType(ctx: ConversionContext, type: Type): string {
       return "Record<never, never>";
     }
 
-    return `{\n  ${propertyStrings.join(",\n  ")}\n}`;
+    return `{\n${indent(propertyStrings.join(",\n"))}\n}`;
   }
 
   if (type.isUnion()) {
@@ -175,7 +180,7 @@ function convertType(ctx: ConversionContext, type: Type): string {
 
   if (type.isIntersection()) {
     const types = type.getIntersectionTypes();
-    return `{\n  ...${types.map((type) => convertType(ctx, type)).join(",\n  ...")}\n}`;
+    return `{\n${indent(types.map((type) => "..." + convertType(ctx, type)).join(",\n"))}\n}`;
   }
 
   // Default case - use the type's text representation with proper formatting
