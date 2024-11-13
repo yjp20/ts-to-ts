@@ -66,23 +66,27 @@ describe("TypeScriptToTypeSpecConverter", () => {
       if (errors.length > 0) {
         const formattedErrors = errors
           .map((error) => {
-            let location = "";
-            if (error.target && typeof error.target === "object" && "file" in error.target) {
+            if (
+              error.target &&
+              typeof error.target === "object" &&
+              "file" in error.target
+            ) {
               const file = error.target.file;
               const pos = error.target.pos;
               const lineStarts = file.getLineStarts();
-              const line = lineStarts.findIndex((start, i) => {
-                const nextStart = lineStarts[i + 1] ?? Infinity;
-                return start <= pos && pos < nextStart;
-              }) + 1;
+              const line =
+                lineStarts.findIndex((start, i) => {
+                  const nextStart = lineStarts[i + 1] ?? Infinity;
+                  return start <= pos && pos < nextStart;
+                }) + 1;
               const column = pos - lineStarts[line - 1] + 1;
-              location = `\n  at ${file.path}:${line}:${column}`;
+
+              return `${error.message} @ ${file.path}:${line}:${column}`;
             }
-            return `${error.message}${location}`;
           })
-          .join("\n\n");
+          .join("\n");
         throw new Error(
-          `TypeSpec compilation failed with errors:\n\n${formattedErrors}`
+          `TypeSpec compilation failed with errors:\n${formattedErrors}`
         );
       }
     });
