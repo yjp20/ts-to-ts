@@ -1,8 +1,9 @@
-import { describe, test, expect, beforeEach, afterEach } from "vitest";
+import { describe, test, expect } from "vitest";
 import { Project } from "ts-morph";
 import { convert } from "../src/ts-to-typespec";
 import * as fs from "fs";
 import * as path from "path";
+import * as os from "os";
 import { NodeHost, compile } from "@typespec/compiler";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
@@ -11,20 +12,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 describe("convert", () => {
-  let tempDir: string;
-
-  beforeEach(() => {
-    tempDir = path.join(__dirname, "../temp");
-    if (!fs.existsSync(tempDir)) {
-      fs.mkdirSync(tempDir);
-    }
-  });
-
-  afterEach(() => {
-    if (fs.existsSync(tempDir)) {
-      fs.rmSync(tempDir, { recursive: true });
-    }
-  });
 
   // Dynamically load and run tests for all fixtures
   const fixturesDir = path
@@ -50,8 +37,12 @@ describe("convert", () => {
       project.createSourceFile(fixture, fileContent);
       const typespecCode = convert(project, [fixture]);
 
-      // Write TypeSpec code to temp directory
+      // Create unique temp directory for this test
+      const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ts-to-typespec-'));
       const tempFile = path.join(tempDir, "main.tsp");
+
+      // Clean up temp directory after test
+      try {
       fs.writeFileSync(tempFile, typespecCode);
       fs.writeFileSync(
         path.join(tempDir, "package.json"),
@@ -96,6 +87,8 @@ describe("convert", () => {
         throw new Error(
           `TypeSpec compilation failed with errors:\n\n${formatted}\n\n${formattedErrors}`
         );
+      } finally {
+        fs.rmSync(tempDir, { recursive: true });
       }
     });
   }
