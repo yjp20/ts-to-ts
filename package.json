@@ -8,15 +8,6 @@
   "bin": {
     "ts-to-typespec": "./dist/cli/index.js"
   },
-  "oclif": {
-    "bin": "ts-to-typespec",
-    "dirname": "ts-to-typespec",
-    "commands": "./dist/cli/commands",
-    "plugins": [
-      "@oclif/plugin-help"
-    ],
-    "topicSeparator": " "
-  },
   "scripts": {
     "build": "tsc",
     "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --config jest.config.js",

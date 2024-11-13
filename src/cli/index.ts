@@ -1,7 +1,13 @@
 #!/usr/bin/env node
 
-import { run } from '@oclif/core';
+import { Convert } from "./commands/convert";
+import { flush, handle } from "@oclif/core";
 
-run()
-  .then(() => {})
-  .catch(error => console.error('Failed to run:', error));
+Convert.run().then(
+  async () => {
+    await flush();
+  },
+  async (err) => {
+    await handle(err);
+  }
+);
