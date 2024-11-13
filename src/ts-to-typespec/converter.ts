@@ -7,11 +7,16 @@ import {
   TypeAliasDeclaration,
   InterfaceDeclaration,
   TypeChecker,
+  Node,
+  JSDocableNode,
 } from "ts-morph";
 
 function indent(text: string, level = 1): string {
   const spaces = "  ".repeat(level);
-  return text.split("\n").map(line => line ? spaces + line : line).join("\n");
+  return text
+    .split("\n")
+    .map((line) => (line ? spaces + line : line))
+    .join("\n");
 }
 
 type ConversionResult =
@@ -29,9 +34,20 @@ type ConversionResult =
 type ConversionContext = {
   project: Project;
   typechecker: TypeChecker;
+  models: { name: string; type: Type }[];
 };
 
 export function convertProject(project: Project, files: string[]): string {
+  const models = project
+    .getSourceFiles()
+    .flatMap((sourceFile) => getConvertibleNodes(sourceFile))
+    .map((node) => ({
+      name: getTag(node, "model")?.getCommentText()?.trim() || node.getName(),
+      type: node.getType(),
+    }));
+
+  const ctx = { project, typechecker: project.getTypeChecker(), models };
+
   const conversions = files.map((file): ConversionResult => {
     const sourceFile = project.getSourceFile(file);
     if (!sourceFile) {
@@ -45,10 +61,7 @@ export function convertProject(project: Project, files: string[]): string {
     return {
       kind: "success",
       file,
-      result: convertSourceFile(
-        { project, typechecker: project.getTypeChecker() },
-        sourceFile
-      ),
+      result: convertSourceFile(ctx, sourceFile),
     };
   });
 
@@ -58,21 +71,25 @@ export function convertProject(project: Project, files: string[]): string {
     .join("\n\n");
 }
 
+function getTag(node: JSDocableNode, name: string) {
+  return node
+    .getJsDocs()
+    .flatMap((doc) => doc.getTags())
+    .find((tag) => tag.getTagName() === name);
+}
+
+function getConvertibleNodes(sourceFile: SourceFile) {
+  return [
+    ...sourceFile.getChildrenOfKind(SyntaxKind.TypeAliasDeclaration),
+    ...sourceFile.getChildrenOfKind(SyntaxKind.InterfaceDeclaration),
+  ].filter((node) => getTag(node, "model"));
+}
+
 function convertSourceFile(
   ctx: ConversionContext,
   sourceFile: SourceFile
 ): string {
-  const nodes = [
-    ...sourceFile.getChildrenOfKind(SyntaxKind.TypeAliasDeclaration),
-    ...sourceFile.getChildrenOfKind(SyntaxKind.InterfaceDeclaration),
-  ];
-
-  const convertibleNodes = nodes.filter((node) => {
-    return node
-      .getJsDocs()
-      .flatMap((doc) => doc.getTags())
-      .some((tag) => tag.getTagName() === "model");
-  });
+  const convertibleNodes = getConvertibleNodes(sourceFile);
 
   return convertibleNodes
     .map((node) => convertTypeDefinition(ctx, node))
@@ -88,10 +105,20 @@ function convertTypeDefinition(
   const type = node.getType();
   const typeText = convertType(ctx, type);
 
+  // Note: this is hacky do something better
+  if (typeText.startsWith("{")) {
+    return `model ${name} ${typeText};`;
+  }
+
   return `alias ${name} = ${typeText};`;
 }
 
 function referenceType(ctx: ConversionContext, type: Type): string {
+  const model = ctx.models.find((model) => model.type === type);
+  if (model) {
+    return model.name;
+  }
+
   return convertType(ctx, type);
 }
 
@@ -105,7 +132,7 @@ function convertType(ctx: ConversionContext, type: Type): string {
       .flatMap((t, index) => {
         const subType =
           type.compilerType.types[index] &&
-          convertType(
+          referenceType(
             ctx,
             // @ts-expect-error
             ctx.project._context.compilerFactory.getType(
@@ -127,12 +154,12 @@ function convertType(ctx: ConversionContext, type: Type): string {
   if (type.isArray()) {
     // Handle tuple types
     const elementType = type.getArrayElementType()!;
-    return `${convertType(ctx, elementType)}[]`;
+    return `${referenceType(ctx, elementType)}[]`;
   }
 
   if (type.isTuple()) {
     const tupleTypes = type.getTupleElements();
-    return `[${tupleTypes.map((t) => convertType(ctx, t)).join(", ")}]`;
+    return `[${tupleTypes.map((t) => referenceType(ctx, t)).join(", ")}]`;
   }
 
   if (type.isObject()) {
@@ -141,7 +168,9 @@ function convertType(ctx: ConversionContext, type: Type): string {
     // Handle generic types
     if (type.getTypeArguments().length > 0) {
       const baseType = symbol?.getName() || "";
-      const typeArgs = type.getTypeArguments().map((t) => convertType(ctx, t));
+      const typeArgs = type
+        .getTypeArguments()
+        .map((t) => referenceType(ctx, t));
 
       // Special case for built-in generics
       if (baseType === "Array") {
@@ -157,7 +186,7 @@ function convertType(ctx: ConversionContext, type: Type): string {
 
     const properties = type.getProperties();
     const propertyStrings = properties.map((prop) => {
-      const type = convertType(
+      const type = referenceType(
         ctx,
         prop.getTypeAtLocation(prop.getValueDeclaration()!)
       );
@@ -174,13 +203,20 @@ function convertType(ctx: ConversionContext, type: Type): string {
   if (type.isUnion()) {
     return type
       .getUnionTypes() //
-      .map((type) => convertType(ctx, type))
+      .map((type) => referenceType(ctx, type))
       .join(" | ");
   }
 
   if (type.isIntersection()) {
-    const types = type.getIntersectionTypes();
-    return `{\n${indent(types.map((type) => "..." + convertType(ctx, type)).join(",\n"))}\n}`;
+    const properties = type.getProperties();
+    const propertyStrings = properties.map((prop) => {
+      const type = referenceType(
+        ctx,
+        prop.getTypeAtLocation(prop.getValueDeclaration()!)
+      );
+      return `${prop.getName()}${prop.isOptional() ? "?" : ""}: ${type}`;
+    });
+    return `{\n${indent(propertyStrings.join(",\n"))}\n}`;
   }
 
   // Default case - use the type's text representation with proper formatting
