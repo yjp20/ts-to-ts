@@ -1,4 +1,4 @@
-/** @convert */
+/** @model */
 type Readonly<T> = {
   readonly [P in keyof T]: T[P];
 };

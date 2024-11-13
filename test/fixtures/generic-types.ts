@@ -1,4 +1,4 @@
-/** @convert */
+/** @model */
 interface Container<T> {
   value: T;
   metadata?: Record<string, unknown>;
