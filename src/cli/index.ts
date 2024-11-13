@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-import { run, flush, handle } from "@oclif/core";
+import { run } from '@oclif/core';
 
 run()
-  .then(() => flush)
-  .catch(handle);
+  .then(() => {})
+  .catch(error => console.error('Failed to run:', error));
