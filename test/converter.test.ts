@@ -1,3 +1,4 @@
+import { Project } from "ts-morph";
 import { convertProject } from "../src/ts-to-typespec";
 import * as fs from "fs";
 import * as path from "path";
@@ -40,8 +41,10 @@ describe("TypeScriptToTypeSpecConverter", () => {
         "utf-8"
       );
 
-      // Convert to TypeSpec
-      const typespecCode = convertProject();
+      // Create TypeScript project and convert to TypeSpec
+      const project = new Project();
+      project.createSourceFile(fixture, fileContent);
+      const typespecCode = convertProject(project, [fixture]);
 
       // Write TypeSpec code to temp directory
       const tempFile = path.join(tempDir, "main.tsp");
