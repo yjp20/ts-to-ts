@@ -28,9 +28,19 @@ export function lazy<T>(
   strings: TemplateStringsArray,
   ...values: Array<string | number | LazyString<T>>
 ): LazyString<T> {
-  return DumbCombinator(values, (rendered) =>
-    String.raw({ raw: strings.raw }, ...rendered)
-  );
+  return DumbCombinator(values, (rendered) => {
+    const raw = String.raw({ raw: strings.raw }, ...rendered);
+    const lines = raw.split('\n');
+    
+    // Find common indentation level
+    const matches = lines.filter(l => l.trim()).map(l => l.match(/^[ \t]*/)?.[0].length ?? 0);
+    const minIndent = matches.length ? Math.min(...matches) : 0;
+    
+    // Remove common indentation
+    return lines
+      .map(line => line.length > minIndent ? line.slice(minIndent) : line)
+      .join('\n');
+  });
 }
 
 export function Indent<T>(
