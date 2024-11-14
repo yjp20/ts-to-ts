@@ -14,7 +14,7 @@ import {
   Indent,
   lazy,
   type LazyString,
-  Lines,
+  SemicolonLines,
   Stanzas,
   Union,
 } from "./strings.ts";
@@ -120,9 +120,9 @@ function convertSourceFile(
   ctx: ConversionContext,
   sourceFile: SourceFile
 ): TypeSpecString {
-  const convertibleNodes = getConvertibleNodes(sourceFile);
-
-  return Stanzas(...convertibleNodes.map((model) => convertModel(ctx, model)));
+  return Stanzas(
+    ...getConvertibleNodes(sourceFile).map((model) => convertModel(ctx, model))
+  );
 }
 
 function convertModel(ctx: ConversionContext, model: Model): TypeSpecString {
@@ -227,10 +227,14 @@ function convertType(ctx: ConversionContext, type: Type): TypeSpecString {
     );
 
     if (properties.length === 0) {
-      return tsp`${Builtin.Record}<never, never>`;
+      return tsp`{}`;
     }
 
-    return tsp`{\n${Indent(Lines(...propertyStrings))}\n}`;
+    return tsp`
+      {
+        ${SemicolonLines(...propertyStrings)}
+      }
+    `;
   }
   if (type.isUnion()) {
     return Union(
@@ -244,11 +248,11 @@ function convertType(ctx: ConversionContext, type: Type): TypeSpecString {
         ctx,
         prop.getTypeAtLocation(prop.getValueDeclaration()!)
       );
-      return `${prop.getName()}${prop.isOptional() ? "?" : ""}: ${type}`;
+      return tsp`${prop.getName()}${prop.isOptional() ? "?" : ""}: ${type}`;
     });
     return tsp`
       {
-        ${Indent(Lines(propertyStrings))}
+        ${SemicolonLines(...propertyStrings)}
       }
     `;
   }

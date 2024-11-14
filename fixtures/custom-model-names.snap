@@ -1,4 +1,3 @@
-
 <<<<<<<<<<< typescript <<<<<<<<<<<<
 /** @model CustomGreeting */
 type Greeting = string;
@@ -17,14 +16,14 @@ type Admin = User & {
 // custom-model-names.ts
 alias CustomGreeting = string;
 
-model AdminData {
-  name: CustomGreeting,
-  age: float64,
-  permissions: CustomGreeting[]
+alias AdminData = {
+  name: CustomGreeting;
+  age: float64;
+  permissions: CustomGreeting[];
 };
 
 model UserProfile {
-  name: CustomGreeting,
-  age: float64
+  name: CustomGreeting;
+  age: float64;
 };
 >>>>>>>>>>> typespec >>>>>>>>>>>>>>

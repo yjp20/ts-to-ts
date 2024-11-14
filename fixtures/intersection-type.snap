@@ -1,4 +1,3 @@
-
 <<<<<<<<<<< typescript <<<<<<<<<<<<
 /** @model */
 interface Name {
@@ -15,18 +14,18 @@ interface Age {
 type Person = Name & Age;
 ===================================
 // intersection-type.ts
-model Person {
-  first: string,
-  last: string,
-  age: float64
+alias Person = {
+  first: string;
+  last: string;
+  age: float64;
 };
 
 model Name {
-  first: string,
-  last: string
+  first: string;
+  last: string;
 };
 
 model Age {
-  age: float64
+  age: float64;
 };
 >>>>>>>>>>> typespec >>>>>>>>>>>>>>

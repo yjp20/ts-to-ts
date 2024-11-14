@@ -18,11 +18,11 @@ type Record<K extends keyof any, T> = {
 type Omit<T, K extends keyof any> = Pick<T, Exclude<keyof T, K>>;
 ===================================
 // utility-types.ts
-alias Required = Record<never, never>;
+model Required {};
 
-alias Pick = Record<never, never>;
+model Pick {};
 
-alias Record = Record<never, never>;
+model Record {};
 
-alias Omit = Record<never, never>;
+model Omit {};
 >>>>>>>>>>> typespec >>>>>>>>>>>>>>

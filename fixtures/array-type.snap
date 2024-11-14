@@ -1,8 +1,7 @@
-
 <<<<<<<<<<< typescript <<<<<<<<<<<<
 /** @model */
 type StringArray = string[];
 ===================================
 // array-type.ts
-alias StringArray<T> = string[];
+alias StringArray = string[];
 >>>>>>>>>>> typespec >>>>>>>>>>>>>>

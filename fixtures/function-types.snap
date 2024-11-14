@@ -17,16 +17,16 @@ interface APIClient {
 }
 ===================================
 // function-types.ts
-alias Callback = Record<never, never>;
+model Callback {};
 
-alias AsyncFunction = Record<never, never>;
+model AsyncFunction {};
 
 model Handler {
-  handle: Record<never, never>
+  handle: {};
 };
 
 model APIClient {
-  get: Record<never, never>,
-  post: Record<never, never>
+  get: {};
+  post: {};
 };
 >>>>>>>>>>> typespec >>>>>>>>>>>>>>

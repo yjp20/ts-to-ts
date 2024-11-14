@@ -22,7 +22,7 @@ alias Properties = "age" | "name";
 alias NameOrAge = string | AgeType;
 
 model Person {
-  name: string,
-  age: AgeType
+  name: string;
+  age: AgeType;
 };
 >>>>>>>>>>> typespec >>>>>>>>>>>>>>

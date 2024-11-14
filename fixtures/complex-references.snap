@@ -1,4 +1,3 @@
-
 <<<<<<<<<<< typescript <<<<<<<<<<<<
 /** @model */
 interface BaseEntity {
@@ -64,63 +63,63 @@ interface Organization extends BaseEntity {
 ===================================
 // complex-references.ts
 model BaseEntity {
-  id: float64,
-  createdAt: string,
-  updatedAt: string
+  id: float64;
+  createdAt: string;
+  updatedAt: string;
 };
 
 model UserRole {
-  name: "admin" | "user" | "guest",
-  permissions: string[]
+  name: "admin" | "user" | "guest";
+  permissions: string[];
 };
 
 model Department {
-  code: string,
-  name: string,
-  manager?: Employee
+  code: string;
+  name: string;
+  manager?: Employee;
 };
 
 model Address {
-  street: string,
-  city: string,
-  country: string,
-  postalCode?: string
+  street: string;
+  city: string;
+  country: string;
+  postalCode?: string;
 };
 
 model ContactInfo {
-  email: string,
-  phone?: string,
-  alternateEmail?: string,
-  address: Address
+  email: string;
+  phone?: string;
+  alternateEmail?: string;
+  address: Address;
 };
 
 model Employee {
-  employeeId: string,
+  employeeId: string;
   personalInfo: {
-    firstName: string,
-    lastName: string,
-    dateOfBirth?: string
-  },
-  contact: ContactInfo,
-  role: UserRole,
-  department: Department,
-  reportsTo?: Employee,
-  directReports?: Employee[],
-  skills: string[],
-  metadata?: Record<never, never>,
-  id: float64,
-  createdAt: string,
-  updatedAt: string
+    firstName: string;
+    lastName: string;
+    dateOfBirth?: string;
+  };
+  contact: ContactInfo;
+  role: UserRole;
+  department: Department;
+  reportsTo?: Employee;
+  directReports?: Employee[];
+  skills: string[];
+  metadata?: {};
+  id: float64;
+  createdAt: string;
+  updatedAt: string;
 };
 
 model Organization {
-  name: string,
-  mainAddress: Address,
-  departments: Department[],
-  employees: Employee[],
-  settings?: Record<never, never>,
-  id: float64,
-  createdAt: string,
-  updatedAt: string
+  name: string;
+  mainAddress: Address;
+  departments: Department[];
+  employees: Employee[];
+  settings?: {};
+  id: float64;
+  createdAt: string;
+  updatedAt: string;
 };
 >>>>>>>>>>> typespec >>>>>>>>>>>>>>

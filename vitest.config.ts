@@ -5,6 +5,6 @@ export default defineConfig({
     environment: "node",
     include: ["(src|test)/**/*.test.?(c|m)[jt]s?(x)"],
     watchExclude: ["**/node_modules/**", "**/dist/**", "**/fixtures/**"],
-    maxConcurrency: 12,
+    maxConcurrency: 20,
   },
 });

@@ -28,18 +28,39 @@ export function lazy<T>(
   strings: TemplateStringsArray,
   ...values: Array<string | number | LazyString<T>>
 ): LazyString<T> {
+  // @ts-expect-error
+  if (!strings.length) return "";
+
+  const str = [...strings];
+
   return DumbCombinator(values, (rendered) => {
-    const raw = String.raw({ raw: strings.raw }, ...rendered);
-    const lines = raw.split('\n');
-    
-    // Find common indentation level
-    const matches = lines.filter(l => l.trim()).map(l => l.match(/^[ \t]*/)?.[0].length ?? 0);
+    str[0]! = str.at(0)!.trimStart();
+    str[strings.length - 1]! = str.at(-1)!.trimStart();
+
+    const raw = String.raw(
+      { raw: strings },
+      ...rendered.map((render, idx) =>
+        render
+          .split("\n")
+          .join(
+            "\n" +
+              " ".repeat((strings[idx].match(/\n[ \t]*$/)?.[0].length ?? 1) - 1)
+          )
+      )
+    );
+
+    const lines = raw.split("\n");
+    const matches = lines
+      .filter((line) => line.trim())
+      .map((line) => line.match(/^[ \t]*/)![0].length);
+
     const minIndent = matches.length ? Math.min(...matches) : 0;
-    
+
     // Remove common indentation
     return lines
-      .map(line => line.length > minIndent ? line.slice(minIndent) : line)
-      .join('\n');
+      .map((line) => (line.length > minIndent ? line.slice(minIndent) : line))
+      .join("\n")
+      .trim();
   });
 }
 
@@ -62,6 +83,12 @@ export function Stanzas<T>(...values: LazyString<T>[]): LazyString<T> {
 
 export function Lines<T>(...values: LazyString<T>[]): LazyString<T> {
   return DumbCombinator(values, (rendered) => rendered.join("\n"));
+}
+
+export function SemicolonLines<T>(...values: LazyString<T>[]): LazyString<T> {
+  return DumbCombinator(values, (rendered) =>
+    rendered.map((line) => line + ";").join("\n")
+  );
 }
 
 export function Concat<T>(...values: LazyString<T>[]): LazyString<T> {

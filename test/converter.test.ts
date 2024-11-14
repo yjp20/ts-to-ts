@@ -1,4 +1,4 @@
-import { expect, it } from "vitest";
+import { it } from "vitest";
 import * as fs from "fs";
 import * as path from "path";
 import { Worker } from "worker_threads";
@@ -32,20 +32,18 @@ function runWorker(test: string): Promise<any> {
   });
 }
 
-it.concurrent.each(tests)("test %s", async (fixture) => {
-  const result = await runWorker(fixture);
+tests.forEach((test) => {
+  it.concurrent(test, async ({ expect }) => {
+    const result = await runWorker(test);
 
-  if (result.error) {
-    throw new Error(result.error);
-  }
+    if (result.errors?.length) {
+      throw new Error(
+        `TypeSpec compilation failed with errors:\n\n${result.formatted}\n\n${result.errors.join("\n")}`
+      );
+    }
 
-  if (result.errors && result.errors.length > 0) {
-    throw new Error(
-      `TypeSpec compilation failed with errors:\n\n${result.formatted}\n\n${result.errors.join("\n")}`
+    await expect(result.formatted).toMatchFileSnapshot(
+      path.join(fixturesDir, test + ".snap")
     );
-  }
-
-  await expect(result.formatted).toMatchFileSnapshot(
-    path.join(fixturesDir, fixture + ".snap")
-  );
+  });
 });

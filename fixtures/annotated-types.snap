@@ -1,4 +1,3 @@
-
 <<<<<<<<<<< typescript <<<<<<<<<<<<
 /** @model */
 type ConvertMe = string;
@@ -19,7 +18,7 @@ interface IgnoreMe {
 alias ConvertMe = string;
 
 model UserInfo {
-  name: ConvertMe,
-  age: float64
+  name: ConvertMe;
+  age: float64;
 };
 >>>>>>>>>>> typespec >>>>>>>>>>>>>>
