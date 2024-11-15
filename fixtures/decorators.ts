@@ -1,5 +1,12 @@
 /**
- * A versioned API model
+ * This is a comprehensive API model that represents core business entities.
+ * It includes validation rules for each field and ensures data integrity.
+ * The model is versioned and tracked in our system for audit purposes.
+ * 
+ * Key features:
+ * - Unique numeric ID
+ * - Alphabetic name validation
+ * - Email format validation
  * @model
  */
 interface ApiModel {
