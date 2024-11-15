@@ -1,3 +1,4 @@
+<<<<<<<<<<< typescript <<<<<<<<<<<<
 /**
  * This is a comprehensive API model that represents core business entities.
  * It includes validation rules for each field and ensures data integrity.
@@ -49,3 +50,35 @@ type Status = {
   kind: "success" | "error";
   message: string;
 };
+===================================
+// decorators.ts
+alias Username = string;
+
+@doc("Status model with discriminator")
+model Status {
+  kind: "success" | "error";
+  message: Username;
+};
+
+@doc("""
+  This is a comprehensive API model that represents core business entities.
+  It includes validation rules for each field and ensures data integrity.
+  The model is versioned and tracked in our system for audit purposes.
+  
+  Key features:
+  - Unique numeric ID
+  - Alphabetic name validation
+  - Email format validation
+  """)
+model ApiModel {
+  @doc("Unique identifier for the model")
+  @minValue(1)
+  id: float64;
+  @doc("Name must contain only letters")
+  @pattern("^[A-Za-z]+$")
+  name: Username;
+  @doc("Contact email address")
+  @format("email")
+  email: Username;
+};
+>>>>>>>>>>> typespec >>>>>>>>>>>>>>

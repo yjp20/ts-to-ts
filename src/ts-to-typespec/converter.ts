@@ -253,13 +253,19 @@ function convertType(ctx: ConversionContext, type: Type): TypeSpecString {
     }
 
     const properties = type.getProperties();
-    const propertyStrings = properties.map(
-      (prop) =>
-        tsp`${prop.getName()}${prop.isOptional() ? "?" : ""}: ${referenceType(
-          ctx,
-          prop.getTypeAtLocation(prop.getValueDeclaration()!)
-        )}`
-    );
+    const propertyStrings = properties.map((prop) => {
+      const valueDecl = prop.getValueDeclaration();
+      const decorators = valueDecl && getDecorators(valueDecl);
+      const type = referenceType(
+        ctx,
+        prop.getTypeAtLocation(valueDecl!)
+      );
+      
+      return Lines(
+        ...decorators || [],
+        tsp`${prop.getName()}${prop.isOptional() ? "?" : ""}: ${type}`
+      );
+    });
 
     if (properties.length === 0) {
       return tsp`{}`;
