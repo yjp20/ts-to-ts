@@ -14,6 +14,7 @@ import {
   Indent,
   lazy,
   type LazyString,
+  Lines,
   SemicolonLines,
   Stanzas,
   Union,
@@ -103,27 +104,33 @@ function getTag(node: JSDocableNode, name: string) {
     .find((tag) => tag.getTagName() === name);
 }
 
-function getDecorators(node: JSDocableNode): string[] {
-  const decorators = node
+function getDecorators(node: JSDocableNode): TypeSpecString[] {
+  const decorators: TypeSpecString[] = node
     .getJsDocs()
     .flatMap((doc) => doc.getTags())
     .filter((tag) => tag.getTagName() === "decorator")
     .map((tag) => tag.getCommentText()?.trim() || "")
-    .filter((text) => text.length > 0);
+    .filter((text) => text.length > 0)
+    .map((dec) => tsp`@${dec}`);
 
   // Get the JSDoc description and add it as a @doc decorator if present
   const description = node.getJsDocs()[0]?.getDescription().trim();
   if (description) {
     const MAX_SINGLE_LINE_LENGTH = 80;
     const stringified = JSON.stringify(description);
-    
+
     // Use triple quotes if multiline or exceeds length threshold
-    const hasNewline = description.includes('\n');
-    const quotedString = (hasNewline || stringified.length > MAX_SINGLE_LINE_LENGTH) 
-      ? `"""${description}"""` 
-      : stringified;
-      
-    decorators.unshift(`doc(${quotedString})`);
+    const hasNewline = description.includes("\n");
+    const quotedString =
+      hasNewline || stringified.length > MAX_SINGLE_LINE_LENGTH
+        ? tsp`
+            """
+              ${description}
+              """
+          `
+        : stringified;
+
+    decorators.unshift(tsp`@doc(${quotedString})`);
   }
 
   return decorators;
@@ -154,7 +161,7 @@ function convertSourceFile(
 function convertModel(ctx: ConversionContext, model: Model): TypeSpecString {
   const typeText = convertType(ctx, model.type);
   const decorators = getDecorators(model.node);
-  
+
   const typeArgs = model.type
     .getTypeArguments()
     .map((_, index) => ["T"][index]);
@@ -170,10 +177,10 @@ function convertModel(ctx: ConversionContext, model: Model): TypeSpecString {
     isObjectLike && typeArgs.length ? `<${typeArgs.join(", ")}>` : "";
 
   if (isObjectLike) {
-    const decoratorText = decorators.length > 0 
-      ? decorators.map(d => `@${d}\n`).join("") 
-      : "";
-    return tsp`${decoratorText}model ${model.name}${generics} ${typeText};`;
+    return Lines(
+      ...decorators,
+      tsp`model ${model.name}${generics} ${typeText};`
+    );
   }
 
   return tsp`alias ${model.name}${generics} = ${typeText};`;
