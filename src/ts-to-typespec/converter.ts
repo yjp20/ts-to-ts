@@ -114,7 +114,16 @@ function getDecorators(node: JSDocableNode): string[] {
   // Get the JSDoc description and add it as a @doc decorator if present
   const description = node.getJsDocs()[0]?.getDescription().trim();
   if (description) {
-    decorators.unshift(`doc("${description}")`);
+    const MAX_SINGLE_LINE_LENGTH = 80;
+    const stringified = JSON.stringify(description);
+    
+    // Use triple quotes if multiline or exceeds length threshold
+    const hasNewline = description.includes('\n');
+    const quotedString = (hasNewline || stringified.length > MAX_SINGLE_LINE_LENGTH) 
+      ? `"""${description}"""` 
+      : stringified;
+      
+    decorators.unshift(`doc(${quotedString})`);
   }
 
   return decorators;
