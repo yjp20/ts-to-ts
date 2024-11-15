@@ -103,6 +103,15 @@ function getTag(node: JSDocableNode, name: string) {
     .find((tag) => tag.getTagName() === name);
 }
 
+function getDecorators(node: JSDocableNode): string[] {
+  return node
+    .getJsDocs()
+    .flatMap((doc) => doc.getTags())
+    .filter((tag) => tag.getTagName() === "decorator")
+    .map((tag) => tag.getCommentText()?.trim() || "")
+    .filter((text) => text.length > 0);
+}
+
 function getConvertibleNodes(sourceFile: SourceFile): Model[] {
   return [
     ...sourceFile.getChildrenOfKind(SyntaxKind.TypeAliasDeclaration),
@@ -127,7 +136,8 @@ function convertSourceFile(
 
 function convertModel(ctx: ConversionContext, model: Model): TypeSpecString {
   const typeText = convertType(ctx, model.type);
-
+  const decorators = getDecorators(model.node);
+  
   const typeArgs = model.type
     .getTypeArguments()
     .map((_, index) => ["T"][index]);
@@ -140,15 +150,17 @@ function convertModel(ctx: ConversionContext, model: Model): TypeSpecString {
     model.type.getSymbol()?.getName() !== "Record";
 
   const generics =
-    // TODO: guh
     isObjectLike && typeArgs.length ? `<${typeArgs.join(", ")}>` : "";
 
-  // Note: this is hacky do something better
+  const decoratorText = decorators.length > 0 
+    ? decorators.map(d => `@${d}\n`).join("") 
+    : "";
+
   if (isObjectLike) {
-    return tsp`model ${model.name}${generics} ${typeText};`;
+    return tsp`${decoratorText}model ${model.name}${generics} ${typeText};`;
   }
 
-  return tsp`alias ${model.name}${generics} = ${typeText};`;
+  return tsp`${decoratorText}alias ${model.name}${generics} = ${typeText};`;
 }
 
 function referenceType(ctx: ConversionContext, type: Type): TypeSpecString {
