@@ -152,15 +152,14 @@ function convertModel(ctx: ConversionContext, model: Model): TypeSpecString {
   const generics =
     isObjectLike && typeArgs.length ? `<${typeArgs.join(", ")}>` : "";
 
-  const decoratorText = decorators.length > 0 
-    ? decorators.map(d => `@${d}\n`).join("") 
-    : "";
-
   if (isObjectLike) {
+    const decoratorText = decorators.length > 0 
+      ? decorators.map(d => `@${d}\n`).join("") 
+      : "";
     return tsp`${decoratorText}model ${model.name}${generics} ${typeText};`;
   }
 
-  return tsp`${decoratorText}alias ${model.name}${generics} = ${typeText};`;
+  return tsp`alias ${model.name}${generics} = ${typeText};`;
 }
 
 function referenceType(ctx: ConversionContext, type: Type): TypeSpecString {
