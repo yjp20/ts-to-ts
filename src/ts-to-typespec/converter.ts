@@ -114,7 +114,7 @@ function getDecorators(node: JSDocableNode): string[] {
   // Get the JSDoc description and add it as a @doc decorator if present
   const description = node.getJsDocs()[0]?.getDescription().trim();
   if (description) {
-    decorators.unshift(`doc "${description}"`);
+    decorators.unshift(`doc("${description}")`);
   }
 
   return decorators;
