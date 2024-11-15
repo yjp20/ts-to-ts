@@ -1,6 +1,6 @@
 /**
+ * A versioned API model
  * @model
- * @doc A versioned API model
  */
 interface ApiModel {
   /** @decorator minValue(1) */

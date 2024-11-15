@@ -104,12 +104,20 @@ function getTag(node: JSDocableNode, name: string) {
 }
 
 function getDecorators(node: JSDocableNode): string[] {
-  return node
+  const decorators = node
     .getJsDocs()
     .flatMap((doc) => doc.getTags())
     .filter((tag) => tag.getTagName() === "decorator")
     .map((tag) => tag.getCommentText()?.trim() || "")
     .filter((text) => text.length > 0);
+
+  // Get the JSDoc description and add it as a @doc decorator if present
+  const description = node.getJsDocs()[0]?.getDescription().trim();
+  if (description) {
+    decorators.unshift(`doc "${description}"`);
+  }
+
+  return decorators;
 }
 
 function getConvertibleNodes(sourceFile: SourceFile): Model[] {
